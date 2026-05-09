@@ -16,7 +16,7 @@ class QuizFlowScreen extends StatefulWidget {
 
 class _QuizFlowScreenState extends State<QuizFlowScreen> {
   final PageController _pageController = PageController();
-  final UserProfileModel _userProfile = UserProfileModel();
+  late UserProfileModel _userProfile;
 
   List<QuestionModel> _activeQuestions = [QuizData.entryQuestion];
   int _currentIndex = 0;
@@ -41,6 +41,12 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _userProfile = widget.userProfile;
+  }
+
   void _nextPage() {
     if (_currentIndex < _activeQuestions.length - 1) {
       _pageController.nextPage(
@@ -63,7 +69,10 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
     if (currentQuestion.id == "entry") {
       if (_selectedSingleOption == QuizData.entryQuestion.options[0].text) {
         setState(() {
-          _activeQuestions = [QuizData.directSkinTypeQuestion, ...QuizData.mainSurvey];
+          _activeQuestions = [
+            QuizData.directSkinTypeQuestion,
+            ...QuizData.mainSurvey
+          ];
           _isQuizStarted = true;
           _currentIndex = 0;
           _selectedSingleOption = null;
@@ -71,7 +80,8 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
         });
         _pageController.jumpToPage(0);
         return;
-      } else if (_selectedSingleOption == QuizData.entryQuestion.options[1].text) {
+      } else if (_selectedSingleOption ==
+          QuizData.entryQuestion.options[1].text) {
         setState(() {
           _activeQuestions = [...QuizData.skinTypeQuiz, ...QuizData.mainSurvey];
           _isQuizStarted = true;
@@ -96,21 +106,26 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
       }
     } else {
       String qId = currentQuestion.id;
-      if (qId == "direct_skin_type") _userProfile.skinType = _selectedSingleOption;
+      if (qId == "direct_skin_type")
+        _userProfile.skinType = _selectedSingleOption;
       if (qId == "sq1") _userProfile.washFeeling = _selectedSingleOption;
       if (qId == "sq2") _userProfile.poreSize = _selectedSingleOption;
       if (qId == "sq3") _userProfile.shineLevel = _selectedSingleOption;
       if (qId == "sq4") _userProfile.flakiness = _selectedSingleOption;
-      if (qId == "sq5") _userProfile.sensitivityResponse = _selectedSingleOption;
+      if (qId == "sq5")
+        _userProfile.sensitivityResponse = _selectedSingleOption;
       if (qId == "m1") _userProfile.ageRange = _selectedSingleOption;
       if (qId == "m2") _userProfile.generalSensitivity = _selectedSingleOption;
-      if (qId == "m3") _userProfile.skinConcerns = List.from(_selectedMultiOptions);
+      if (qId == "m3")
+        _userProfile.skinConcerns = List.from(_selectedMultiOptions);
       if (qId == "m4") _userProfile.unevenSkinTone = _selectedSingleOption;
-      if (qId == "m5") _userProfile.eyeConcerns = List.from(_selectedMultiOptions);
+      if (qId == "m5")
+        _userProfile.eyeConcerns = List.from(_selectedMultiOptions);
       if (qId == "m6") _userProfile.acneType = _selectedSingleOption;
       if (qId == "m7") _userProfile.allergies = _selectedSingleOption;
       if (qId == "m8") _userProfile.pregnancyStatus = _selectedSingleOption;
-      if (qId == "m9") _userProfile.activeIngredients = List.from(_selectedMultiOptions);
+      if (qId == "m9")
+        _userProfile.activeIngredients = List.from(_selectedMultiOptions);
       if (qId == "m10") _userProfile.sunscreenUsage = _selectedSingleOption;
       if (qId == "m11") _userProfile.makeupFrequency = _selectedSingleOption;
       if (qId == "m12") _userProfile.makeupRemoval = _selectedSingleOption;
@@ -129,8 +144,10 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
   @override
   Widget build(BuildContext context) {
     bool isLastPage = _currentIndex == _activeQuestions.length - 1;
-    String buttonText = (_isQuizStarted && isLastPage) ? 'Analizi Bitir' : 'Devam Et';
-    bool hasAnswer = _selectedSingleOption != null || _selectedMultiOptions.isNotEmpty;
+    String buttonText =
+        (_isQuizStarted && isLastPage) ? 'Analizi Bitir' : 'Devam Et';
+    bool hasAnswer =
+        _selectedSingleOption != null || _selectedMultiOptions.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -189,7 +206,8 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Birden fazla seçebilirsiniz',
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey.shade500),
                         ),
                       ],
                       const SizedBox(height: 32),
@@ -203,10 +221,12 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
                               return MultiChoiceCard(
                                 text: option.text,
                                 subtitle: option.subtitle,
-                                isSelected: _selectedMultiOptions.contains(option.text),
+                                isSelected:
+                                    _selectedMultiOptions.contains(option.text),
                                 onTap: () {
                                   setState(() {
-                                    if (_selectedMultiOptions.contains(option.text)) {
+                                    if (_selectedMultiOptions
+                                        .contains(option.text)) {
                                       _selectedMultiOptions.remove(option.text);
                                     } else {
                                       _selectedMultiOptions.add(option.text);
@@ -218,9 +238,11 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
                               return SingleChoiceCard(
                                 text: option.text,
                                 subtitle: option.subtitle,
-                                isSelected: _selectedSingleOption == option.text,
+                                isSelected:
+                                    _selectedSingleOption == option.text,
                                 onTap: () {
-                                  setState(() => _selectedSingleOption = option.text);
+                                  setState(() =>
+                                      _selectedSingleOption = option.text);
                                 },
                               );
                             }
@@ -260,7 +282,8 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Icon(Icons.arrow_back_ios, size: 18, color: Colors.black),
+                      child: const Icon(Icons.arrow_back_ios,
+                          size: 18, color: Colors.black),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -283,7 +306,8 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: hasAnswer ? Colors.white : Colors.grey.shade500,
+                          color:
+                              hasAnswer ? Colors.white : Colors.grey.shade500,
                         ),
                       ),
                     ),

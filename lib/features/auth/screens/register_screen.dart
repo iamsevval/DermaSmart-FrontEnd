@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../models/user_profile_model.dart';
 import 'quiz_flow_screen.dart';
+import '../../../services/auth_service.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -37,8 +39,6 @@ class _RegisterScreenState extends State<RegisterScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
     _animController.forward();
-
-    // Şifre değişince kriterleri güncelle
     _passwordCtrl.addListener(() => setState(() {}));
   }
 
@@ -84,24 +84,47 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
-    // TODO: Backend API bağlantısı buraya gelecek
-    // Örnek: final response = await AuthService.register(name, email, password);
-    await Future.delayed(const Duration(seconds: 1));
+    final result = await AuthService.register(
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
+    );
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    final userProfile = UserProfileModel(
-      name: _nameCtrl.text.trim(),
-      email: _emailCtrl.text.trim(),
-    );
+    if (result['success']) {
+      final loginResult = await AuthService.login(
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text,
+      );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => QuizFlowScreen(userProfile: userProfile),
-      ),
-    );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (loginResult['success']) {
+        final userProfile = UserProfileModel(
+          name: _nameCtrl.text.trim(),
+          email: _emailCtrl.text.trim(),
+          token: loginResult['token'],
+          userId: loginResult['userId'],
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QuizFlowScreen(userProfile: userProfile),
+          ),
+        );
+      }
+    } else {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Bir hata oluştu.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -140,7 +163,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                     style: TextStyle(fontSize: 15, color: Colors.grey.shade600)),
                   const SizedBox(height: 32),
 
-                  // Ad Soyad
                   _FieldLabel(text: 'Ad Soyad'),
                   TextFormField(
                     controller: _nameCtrl,
@@ -151,7 +173,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                   ),
                   const SizedBox(height: 16),
 
-                  // E-posta
                   _FieldLabel(text: 'E-posta'),
                   TextFormField(
                     controller: _emailCtrl,
@@ -162,7 +183,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                   ),
                   const SizedBox(height: 16),
 
-                  // Şifre
                   _FieldLabel(text: 'Şifre'),
                   TextFormField(
                     controller: _passwordCtrl,
@@ -183,13 +203,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                   ),
                   const SizedBox(height: 10),
 
-                  // Şifre kriterleri
                   _CriteriaRow(met: hasLength, text: 'En az 6 karakter'),
                   const SizedBox(height: 4),
                   _CriteriaRow(met: hasNumber, text: 'En az 1 rakam'),
                   const SizedBox(height: 16),
 
-                  // Şifre tekrar
                   _FieldLabel(text: 'Şifre Tekrar'),
                   TextFormField(
                     controller: _confirmCtrl,
@@ -210,7 +228,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                   ),
                   const SizedBox(height: 32),
 
-                  // Kayıt butonu
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -236,7 +253,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                   ),
                   const SizedBox(height: 16),
 
-                  // Giriş yap linki
                   Center(
                     child: GestureDetector(
                       onTap: () => Navigator.pop(context),

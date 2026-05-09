@@ -1,6 +1,8 @@
 class UserProfileModel {
   String? name;
   String? email;
+  String? token;
+  int? userId;
   String? skinType;
   // Mini quiz details if taken
   String? washFeeling;
@@ -8,7 +10,7 @@ class UserProfileModel {
   String? shineLevel;
   String? flakiness;
   String? sensitivityResponse;
-  
+
   // Main survey
   String? ageRange;
   String? generalSensitivity;
@@ -29,6 +31,8 @@ class UserProfileModel {
   UserProfileModel({
     this.name,
     this.email,
+    this.token,
+    this.userId,
     this.skinType,
     this.washFeeling,
     this.poreSize,
@@ -56,6 +60,8 @@ class UserProfileModel {
     return {
       'name': name,
       'email': email,
+      'token': token,
+      'userId': userId,
       'skinType': skinType,
       'washFeeling': washFeeling,
       'poreSize': poreSize,

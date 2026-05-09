@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../models/user_profile_model.dart';
 import 'quiz_flow_screen.dart';
 import 'register_screen.dart';
+import '../../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -34,7 +35,8 @@ class _LoginScreenState extends State<LoginScreen>
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
+    ).animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
     _animController.forward();
   }
 
@@ -63,23 +65,35 @@ class _LoginScreenState extends State<LoginScreen>
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
-    // TODO: Backend API bağlantısı buraya gelecek
-    // Örnek: final response = await AuthService.login(email, password);
-    await Future.delayed(const Duration(seconds: 1));
+    final result = await AuthService.login(
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
+    );
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    final userProfile = UserProfileModel(
-      email: _emailCtrl.text.trim(),
-    );
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => QuizFlowScreen(userProfile: userProfile),
-      ),
-    );
+    if (result['success']) {
+      final userProfile = UserProfileModel(
+        email: _emailCtrl.text.trim(),
+        token: result['token'],
+        userId: result['userId'],
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => QuizFlowScreen(userProfile: userProfile),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Giriş başarısız.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -102,7 +116,8 @@ class _LoginScreenState extends State<LoginScreen>
 
                     // Logo
                     Container(
-                      width: 60, height: 60,
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
                         color: Colors.deepPurple,
                         borderRadius: BorderRadius.circular(18),
@@ -115,17 +130,19 @@ class _LoginScreenState extends State<LoginScreen>
                         ],
                       ),
                       child: const Icon(Icons.face_retouching_natural,
-                        color: Colors.white, size: 34),
+                          color: Colors.white, size: 34),
                     ),
                     const SizedBox(height: 28),
 
                     const Text('Tekrar Hoş Geldin 👋',
-                      style: TextStyle(
-                        fontSize: 28, fontWeight: FontWeight.w800,
-                        color: Colors.black87)),
+                        style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87)),
                     const SizedBox(height: 6),
                     Text('Cilt bakım rutinine devam et.',
-                      style: TextStyle(fontSize: 15, color: Colors.grey.shade600)),
+                        style: TextStyle(
+                            fontSize: 15, color: Colors.grey.shade600)),
                     const SizedBox(height: 36),
 
                     // E-posta
@@ -134,7 +151,8 @@ class _LoginScreenState extends State<LoginScreen>
                       controller: _emailCtrl,
                       validator: _validateEmail,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: _buildDecoration('ornek@email.com', Icons.email_outlined),
+                      decoration: _buildDecoration(
+                          'ornek@email.com', Icons.email_outlined),
                     ),
                     const SizedBox(height: 20),
 
@@ -145,13 +163,15 @@ class _LoginScreenState extends State<LoginScreen>
                       validator: _validatePassword,
                       obscureText: _obscurePassword,
                       decoration: _buildDecoration(
-                        '••••••••', Icons.lock_outlined,
+                        '••••••••',
+                        Icons.lock_outlined,
                         suffix: IconButton(
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey.shade400, size: 20),
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: Colors.grey.shade400,
+                              size: 20),
                           onPressed: () => setState(
                               () => _obscurePassword = !_obscurePassword),
                         ),
@@ -166,9 +186,9 @@ class _LoginScreenState extends State<LoginScreen>
                           // TODO: Şifre sıfırlama
                         },
                         child: const Text('Şifremi Unuttum',
-                          style: TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w600)),
+                            style: TextStyle(
+                                color: Colors.deepPurple,
+                                fontWeight: FontWeight.w600)),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -184,17 +204,19 @@ class _LoginScreenState extends State<LoginScreen>
                           disabledBackgroundColor: Colors.grey.shade300,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                              borderRadius: BorderRadius.circular(16)),
                         ),
                         child: _isLoading
                             ? const SizedBox(
-                                width: 22, height: 22,
+                                width: 22,
+                                height: 22,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2.5, color: Colors.white))
+                                    strokeWidth: 2.5, color: Colors.white))
                             : const Text('Giriş Yap',
                                 style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w700,
-                                  color: Colors.white)),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white)),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -206,7 +228,8 @@ class _LoginScreenState extends State<LoginScreen>
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text('veya',
-                            style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                              style: TextStyle(
+                                  color: Colors.grey.shade500, fontSize: 13)),
                         ),
                         Expanded(child: Divider(color: Colors.grey.shade300)),
                       ],
@@ -221,18 +244,19 @@ class _LoginScreenState extends State<LoginScreen>
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const RegisterScreen()),
+                              builder: (_) => const RegisterScreen()),
                         ),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(
-                            color: Colors.deepPurple, width: 1.5),
+                              color: Colors.deepPurple, width: 1.5),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                              borderRadius: BorderRadius.circular(16)),
                         ),
                         child: const Text('Hesap Oluştur',
-                          style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w700,
-                            color: Colors.deepPurple)),
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.deepPurple)),
                       ),
                     ),
                   ],
@@ -245,7 +269,8 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  InputDecoration _buildDecoration(String hint, IconData icon, {Widget? suffix}) {
+  InputDecoration _buildDecoration(String hint, IconData icon,
+      {Widget? suffix}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
@@ -287,8 +312,10 @@ class _FieldLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(text,
-        style: const TextStyle(
-          fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
+          style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87)),
     );
   }
 }
