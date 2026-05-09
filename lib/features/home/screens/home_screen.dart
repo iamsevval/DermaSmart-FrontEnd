@@ -5,7 +5,9 @@ import '../../progress/screens/progress_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String? userName;
+  final String? email;
+  const HomeScreen({super.key, this.userName, this.email});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -14,18 +16,24 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const _HomeTab(),
-    const RoutineScreen(),
-    const ScanScreen(),
-    const ProgressScreen(),
-    const ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      _HomeTab(
+        userName: widget.userName,
+        onProfileTap: () => setState(() => _currentIndex = 4),
+      ),
+      const RoutineScreen(),
+      const ScanScreen(),
+      const ProgressScreen(),
+      ProfileScreen(
+        userName: widget.userName,
+        email: widget.email,
+      ),
+    ];
+
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -47,8 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Colors.white,
           selectedItemColor: Colors.deepPurple,
           unselectedItemColor: Colors.grey.shade400,
-          selectedLabelStyle: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w600),
+          selectedLabelStyle:
+              const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           elevation: 0,
           items: const [
@@ -85,7 +93,9 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _HomeTab extends StatelessWidget {
-  const _HomeTab();
+  final String? userName;
+  final VoidCallback? onProfileTap;
+  const _HomeTab({this.userName, this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +115,11 @@ class _HomeTab extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Günaydın 🌸',
+                          userName != null
+                              ? 'Günaydın, $userName 🌸'
+                              : 'Günaydın 🌸',
                           style: const TextStyle(
-                            fontSize: 26,
+                            fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: Colors.black87,
                           ),
@@ -123,15 +135,20 @@ class _HomeTab extends StatelessWidget {
                       ],
                     ),
                   ),
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.deepPurple.shade50,
-                    child: const Text(
-                      'D',
-                      style: TextStyle(
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
+                  GestureDetector(
+                    onTap: onProfileTap,
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.deepPurple.shade50,
+                      child: Text(
+                        userName != null && userName!.isNotEmpty
+                            ? userName![0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -158,22 +175,22 @@ class _HomeTab extends StatelessWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text('☀️ Sabah Rutini',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            )),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              )),
                         ),
                         const Spacer(),
                         const Text('3/5 adım',
-                          style: TextStyle(
-                            color: Colors.white70, fontSize: 12)),
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 12)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -188,10 +205,10 @@ class _HomeTab extends StatelessWidget {
                     const SizedBox(height: 16),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
+                      child: const LinearProgressIndicator(
                         value: 0.6,
                         backgroundColor: Colors.white24,
-                        valueColor: const AlwaysStoppedAnimation(Colors.white),
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
                         minHeight: 6,
                       ),
                     ),
@@ -204,7 +221,7 @@ class _HomeTab extends StatelessWidget {
                           side: const BorderSide(color: Colors.white54),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () {},
                         child: const Text('Rutine Devam Et'),
@@ -217,8 +234,8 @@ class _HomeTab extends StatelessWidget {
 
               // Streak banner
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF3CD),
                   borderRadius: BorderRadius.circular(14),
@@ -231,48 +248,12 @@ class _HomeTab extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('7 günlük seri!',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 15)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 15)),
                         Text('Rutinine sadık kalıyorsun 💜',
-                          style: TextStyle(
-                            color: Colors.grey, fontSize: 13)),
+                            style: TextStyle(color: Colors.grey, fontSize: 13)),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Çakışma uyarısı
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F0),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFFFCCCC)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.warning_amber_rounded,
-                      color: Color(0xFFE05252), size: 28),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('İçerik Çakışması',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFFB03030))),
-                          Text(
-                            'Niasinamide + C Vitamini birlikte kullanmayın.',
-                            style: TextStyle(
-                              fontSize: 12, color: Colors.grey)),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right,
-                      color: Color(0xFFE05252)),
                   ],
                 ),
               ),
