@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
-import 'features/auth/screens/splash_screen.dart';
+import 'core/router/app_router.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const DermaSmartApp());
+  runApp(const MyApp());
 }
 
-class DermaSmartApp extends StatelessWidget {
-  const DermaSmartApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'DermaSmart',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-      ),
-      home: const SplashScreen(),
+      routerConfig: appRouter, // Sadece bu kalsın, 'home' veya 'builder' ekleme
     );
   }
 }

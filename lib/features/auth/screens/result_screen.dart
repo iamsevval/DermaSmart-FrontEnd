@@ -26,14 +26,24 @@ class _ResultScreenState extends State<ResultScreen> {
 
     setState(() => _isSaving = true);
 
-    await AuthService.saveSkinProfile(
+    final result = await AuthService.saveSkinProfile(
       token: profile.token!,
       skinType: profile.skinType ?? 'Bilinmiyor',
       concerns: profile.skinConcerns,
       ageRange: profile.ageRange ?? 'Bilinmiyor',
     );
 
-    if (mounted) setState(() => _isSaving = false);
+    if (mounted) {
+      setState(() => _isSaving = false);
+      if (result['success'] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Profil kaydedilemedi.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -192,6 +202,9 @@ class _ResultScreenState extends State<ResultScreen> {
                             builder: (_) => HomeScreen(
                               userName: widget.userProfile.name,
                               email: widget.userProfile.email,
+                              skinType: widget.userProfile.skinType, // ← EKLE
+                              skinConcerns:
+                                  widget.userProfile.skinConcerns, // ← EKLE
                             ),
                           ),
                           (route) => false,

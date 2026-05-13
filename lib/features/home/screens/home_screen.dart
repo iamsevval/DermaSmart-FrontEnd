@@ -7,7 +7,16 @@ import '../../profile/screens/profile_screen.dart';
 class HomeScreen extends StatefulWidget {
   final String? userName;
   final String? email;
-  const HomeScreen({super.key, this.userName, this.email});
+  final String? skinType; // ← EKLE
+  final List<String> skinConcerns; // ← EKLE
+
+  const HomeScreen({
+    super.key,
+    this.userName,
+    this.email,
+    this.skinType, // ← EKLE
+    this.skinConcerns = const [], // ← EKLE
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -29,6 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ProfileScreen(
         userName: widget.userName,
         email: widget.email,
+        skinType: widget.skinType, // ← EKLE
+        skinConcerns: widget.skinConcerns, // ← EKLE
       ),
     ];
 

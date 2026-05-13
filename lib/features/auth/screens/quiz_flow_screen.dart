@@ -5,6 +5,7 @@ import '../../../models/user_profile_model.dart';
 import '../../../shared/widgets/single_choice_card.dart';
 import '../../../shared/widgets/multi_choice_card.dart';
 import 'result_screen.dart';
+import '../../../services/auth_service.dart';
 
 class QuizFlowScreen extends StatefulWidget {
   final UserProfileModel userProfile;
@@ -47,13 +48,20 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
     _userProfile = widget.userProfile;
   }
 
-  void _nextPage() {
+  void _nextPage() async {
     if (_currentIndex < _activeQuestions.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
+      // 🔥 Sadece bu 4 satırı ekle, gerisini silme
+      await AuthService.saveSkinProfile(
+        token: _userProfile.token!,
+        skinType: _userProfile.skinType ?? "Normal",
+        concerns: _userProfile.skinConcerns ?? [],
+        ageRange: _userProfile.ageRange ?? "18-24",
+      );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
