@@ -5,6 +5,7 @@ import '../../../models/user_profile_model.dart';
 import '../../../shared/widgets/single_choice_card.dart';
 import '../../../shared/widgets/multi_choice_card.dart';
 import 'result_screen.dart';
+import '../../../services/auth_service.dart';
 
 class QuizFlowScreen extends StatefulWidget {
   final UserProfileModel userProfile;
@@ -47,13 +48,22 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
     _userProfile = widget.userProfile;
   }
 
-  void _nextPage() {
+  void _nextPage() async {
     if (_currentIndex < _activeQuestions.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
+      String formattedAge = _userProfile.ageRange ?? "18-24";
+      formattedAge = formattedAge.replaceAll(' ', ''); 
+
+      await AuthService.saveSkinProfile(
+        token: _userProfile.token!,
+        skinType: _userProfile.skinType ?? "Normal",
+        concerns: _userProfile.skinConcerns ?? [],
+        ageRange: formattedAge,
+      );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -229,7 +239,19 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
                                         .contains(option.text)) {
                                       _selectedMultiOptions.remove(option.text);
                                     } else {
-                                      _selectedMultiOptions.add(option.text);
+                                      // 🔥 GENEL FİLTRE: "Sıfırlayıcı/Nötr" şıklardan biri seçildiyse her şeyi temizle
+                                      if (option.text == "Hiçbiri" || 
+                                          option.text == "Sorunum yok" || 
+                                          option.text == "Hayır, yok") {
+                                        _selectedMultiOptions.clear();
+                                        _selectedMultiOptions.add(option.text);
+                                      } else {
+                                        // 🔥 Eğer normal bir şikayet seçildiyse, listesindeki nötr şıkları kaldır
+                                        _selectedMultiOptions.remove("Hiçbiri");
+                                        _selectedMultiOptions.remove("Sorunum yok");
+                                        _selectedMultiOptions.remove("Hayır, yok");
+                                        _selectedMultiOptions.add(option.text);
+                                      }
                                     }
                                   });
                                 },

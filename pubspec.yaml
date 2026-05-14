@@ -14,6 +14,8 @@ dependencies:
   flutter_riverpod: ^2.5.1
   google_fonts: ^6.2.1
   http: ^1.6.0
+  shared_preferences: ^2.2.2  # ← BU SATIRI EKLE
+
 
 dev_dependencies:
   flutter_test:

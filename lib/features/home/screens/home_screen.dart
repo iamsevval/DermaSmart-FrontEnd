@@ -7,7 +7,16 @@ import '../../profile/screens/profile_screen.dart';
 class HomeScreen extends StatefulWidget {
   final String? userName;
   final String? email;
-  const HomeScreen({super.key, this.userName, this.email});
+  final String? skinType; // ← EKLE
+  final List<String> skinConcerns; // ← EKLE
+
+  const HomeScreen({
+    super.key,
+    this.userName,
+    this.email,
+    this.skinType, // ← EKLE
+    this.skinConcerns = const [], // ← EKLE
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,7 +30,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = [
       _HomeTab(
         userName: widget.userName,
+        skinConcerns: widget.skinConcerns,
         onProfileTap: () => setState(() => _currentIndex = 4),
+        // 🔥 "Rutine Devam Et" butonuna basıldığında sadece Rutin Tab'ına (index 1) geçişi sağlar
+        onRoutineTabRequested: () => setState(() => _currentIndex = 1),
       ),
       const RoutineScreen(),
       const ScanScreen(),
@@ -29,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ProfileScreen(
         userName: widget.userName,
         email: widget.email,
+        skinType: widget.skinType, // ← EKLE
+        skinConcerns: widget.skinConcerns, // ← EKLE
       ),
     ];
 
@@ -94,8 +108,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HomeTab extends StatelessWidget {
   final String? userName;
+  final List<String> skinConcerns;
   final VoidCallback? onProfileTap;
-  const _HomeTab({this.userName, this.onProfileTap});
+  final VoidCallback onRoutineTabRequested; // 🔥 Üst taba yönlendirme için ekledik
+
+  const _HomeTab({
+    this.userName,
+    this.skinConcerns = const [],
+    this.onProfileTap,
+    required this.onRoutineTabRequested,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +245,7 @@ class _HomeTab extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed: () {},
+                        onPressed: onRoutineTabRequested, // 🔥 Tıklandığında direkt rutin sayfasına atar
                         child: const Text('Rutine Devam Et'),
                       ),
                     ),
@@ -232,7 +254,7 @@ class _HomeTab extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Streak banner
+              // Streak banner (Orijinal haliyle korundu)
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -257,6 +279,87 @@ class _HomeTab extends StatelessWidget {
                   ],
                 ),
               ),
+              
+              // 🔥 [US-07] ÇAKIŞMA KONTROLÜ VE GÖRSEL UYARI PANELİ
+              if (skinConcerns.contains("Koyu Lekeler") && 
+                  skinConcerns.contains("Kızarıklık / Rozasea")) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.amber.shade200, width: 1.5),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 26),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Akıllı İçerik Etkileşimi",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber.shade900,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "C Vitamini ve Niasinamid içerikleri aynı anda ciltte reaksiyon riski taşır. Rutininiz otomatik olarak güvenli saatlere bölünmüştür.",
+                              style: TextStyle(color: Colors.amber.shade800, fontSize: 12, height: 1.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (skinConcerns.contains("İnce Çizgiler / Kırışıklık") && 
+                  skinConcerns.contains("Akne ve Sivilceler")) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.red.shade200, width: 1.5),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.gpp_bad_outlined, color: Colors.red.shade900, size: 26),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Kritik İçerik Çakışması Önlendi!",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red.shade900,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Retinol ve Asitler (AHA/BHA) aynı gün kullanılamaz! Cilt bariyerinizi korumak adına içerikleriniz farklı akşam rutinlerine dağıtılmıştır.",
+                              style: TextStyle(color: Colors.red.shade800, fontSize: 12, height: 1.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

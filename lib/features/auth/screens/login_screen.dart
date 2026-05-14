@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../../../models/user_profile_model.dart';
 import 'quiz_flow_screen.dart';
 import 'register_screen.dart';
 import '../../../services/auth_service.dart';
+import '../../home/screens/home_screen.dart';
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -74,17 +77,53 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      final userProfile = UserProfileModel(
-        email: _emailCtrl.text.trim(),
-        token: result['token'],
-        userId: result['userId'],
+      final profileCheck = await http.get(
+        Uri.parse('http://10.0.2.2:5030/api/skinprofile/${result['userId']}'),
+        headers: {'Authorization': 'Bearer ${result['token']}'},
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => QuizFlowScreen(userProfile: userProfile),
-        ),
-      );
+
+      if (!mounted) return;
+
+      // İsmi backend'den al, yoksa cihazdan oku
+      String? userName = result['fullName'] ?? result['name'];
+      if (userName == null || userName.toString().isEmpty) {
+        userName = await AuthService.getSavedName();
+      } else {
+        await AuthService.saveName(userName);
+      }
+
+      if (profileCheck.statusCode == 200) {
+        final profileData = jsonDecode(profileCheck.body);
+        final fullProfile = UserProfileModel.fromJson(profileData);
+        fullProfile.token = result['token'];
+        fullProfile.email = _emailCtrl.text.trim();
+        fullProfile.name = userName;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              userName: fullProfile.name,
+              email: fullProfile.email,
+              skinType: fullProfile.skinType,
+              skinConcerns: fullProfile.skinConcerns,
+            ),
+          ),
+        );
+      } else {
+        final userProfile = UserProfileModel(
+          name: userName,
+          email: _emailCtrl.text.trim(),
+          token: result['token'],
+          userId: result['userId'],
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QuizFlowScreen(userProfile: userProfile),
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -113,8 +152,6 @@ class _LoginScreenState extends State<LoginScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 24),
-
-                    // Logo
                     Container(
                       width: 60,
                       height: 60,
@@ -133,7 +170,6 @@ class _LoginScreenState extends State<LoginScreen>
                           color: Colors.white, size: 34),
                     ),
                     const SizedBox(height: 28),
-
                     const Text('Tekrar Hoş Geldin 👋',
                         style: TextStyle(
                             fontSize: 28,
@@ -144,8 +180,6 @@ class _LoginScreenState extends State<LoginScreen>
                         style: TextStyle(
                             fontSize: 15, color: Colors.grey.shade600)),
                     const SizedBox(height: 36),
-
-                    // E-posta
                     _FieldLabel(text: 'E-posta'),
                     TextFormField(
                       controller: _emailCtrl,
@@ -155,8 +189,6 @@ class _LoginScreenState extends State<LoginScreen>
                           'ornek@email.com', Icons.email_outlined),
                     ),
                     const SizedBox(height: 20),
-
-                    // Şifre
                     _FieldLabel(text: 'Şifre'),
                     TextFormField(
                       controller: _passwordCtrl,
@@ -177,14 +209,10 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                     ),
-
-                    // Şifremi unuttum
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          // TODO: Şifre sıfırlama
-                        },
+                        onPressed: () {},
                         child: const Text('Şifremi Unuttum',
                             style: TextStyle(
                                 color: Colors.deepPurple,
@@ -192,8 +220,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // Giriş butonu
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -220,8 +246,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Çizgi
                     Row(
                       children: [
                         Expanded(child: Divider(color: Colors.grey.shade300)),
@@ -235,8 +259,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Kayıt ol butonu
                     SizedBox(
                       width: double.infinity,
                       height: 56,
