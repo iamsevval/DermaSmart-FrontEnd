@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../../models/user_profile_model.dart';
 import '../../home/screens/home_screen.dart';
 import '../../../services/auth_service.dart';
@@ -13,11 +15,37 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   bool _isSaving = false;
+  List<String> _conflicts = [];
 
   @override
   void initState() {
     super.initState();
     _saveSkinProfile();
+    _checkConflicts();
+  }
+
+  Future<void> _checkConflicts() async {
+    final ingredients = widget.userProfile.activeIngredients;
+    if (ingredients == null || ingredients.isEmpty) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5030/api/products/check-conflicts'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'ingredients': ingredients}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['hasConflict'] == true && mounted) {
+          setState(() {
+            _conflicts = List<String>.from(data['conflicts']);
+          });
+        }
+      }
+    } catch (e) {
+      // Backend bağlantı hatası — sessizce geç
+    }
   }
 
   Future<void> _saveSkinProfile() async {
@@ -100,6 +128,64 @@ class _ResultScreenState extends State<ResultScreen> {
                     SizedBox(width: 10),
                     Text('Profil kaydediliyor...',
                         style: TextStyle(color: Colors.deepPurple)),
+                  ],
+                ),
+              ),
+
+            // ⚠️ ÇAKIŞMA UYARISI
+            if (_conflicts.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.orange.shade300),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded,
+                            color: Colors.orange.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'İçerik Çakışması Tespit Edildi!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.orange.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ..._conflicts.map((c) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            children: [
+                              Icon(Icons.block,
+                                  size: 14, color: Colors.orange.shade600),
+                              const SizedBox(width: 6),
+                              Text(
+                                c,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.orange.shade800,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Bu içerikleri aynı anda kullanmaktan kaçının.',
+                      style: TextStyle(
+                          fontSize: 12, color: Colors.orange.shade600),
+                    ),
                   ],
                 ),
               ),
@@ -202,9 +288,8 @@ class _ResultScreenState extends State<ResultScreen> {
                             builder: (_) => HomeScreen(
                               userName: widget.userProfile.name,
                               email: widget.userProfile.email,
-                              skinType: widget.userProfile.skinType, // ← EKLE
-                              skinConcerns:
-                                  widget.userProfile.skinConcerns, // ← EKLE
+                              skinType: widget.userProfile.skinType,
+                              skinConcerns: widget.userProfile.skinConcerns,
                             ),
                           ),
                           (route) => false,

@@ -55,12 +55,14 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // 🔥 Sadece bu 4 satırı ekle, gerisini silme
+      String formattedAge = _userProfile.ageRange ?? "18-24";
+      formattedAge = formattedAge.replaceAll(' ', ''); 
+
       await AuthService.saveSkinProfile(
         token: _userProfile.token!,
         skinType: _userProfile.skinType ?? "Normal",
         concerns: _userProfile.skinConcerns ?? [],
-        ageRange: _userProfile.ageRange ?? "18-24",
+        ageRange: formattedAge,
       );
       Navigator.pushReplacement(
         context,
@@ -237,7 +239,19 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
                                         .contains(option.text)) {
                                       _selectedMultiOptions.remove(option.text);
                                     } else {
-                                      _selectedMultiOptions.add(option.text);
+                                      // 🔥 GENEL FİLTRE: "Sıfırlayıcı/Nötr" şıklardan biri seçildiyse her şeyi temizle
+                                      if (option.text == "Hiçbiri" || 
+                                          option.text == "Sorunum yok" || 
+                                          option.text == "Hayır, yok") {
+                                        _selectedMultiOptions.clear();
+                                        _selectedMultiOptions.add(option.text);
+                                      } else {
+                                        // 🔥 Eğer normal bir şikayet seçildiyse, listesindeki nötr şıkları kaldır
+                                        _selectedMultiOptions.remove("Hiçbiri");
+                                        _selectedMultiOptions.remove("Sorunum yok");
+                                        _selectedMultiOptions.remove("Hayır, yok");
+                                        _selectedMultiOptions.add(option.text);
+                                      }
                                     }
                                   });
                                 },
