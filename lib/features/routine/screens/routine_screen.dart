@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../services/routine_service.dart';
 
 class RoutineScreen extends StatefulWidget {
-  const RoutineScreen({super.key});
+  final String? token;
+  final String? skinType;
+  const RoutineScreen({super.key, this.token, this.skinType});
 
   @override
   State<RoutineScreen> createState() => _RoutineScreenState();
@@ -12,26 +15,93 @@ class _RoutineScreenState extends State<RoutineScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final _morningSteps = [
-    _RoutineStep('Yüz Temizleyici', 'Nazikçe 60 sn. uygula', '☁️', false),
-    _RoutineStep('Tonik', 'Pamukla silerek uygula', '💧', false),
-    _RoutineStep('C Vitamini Serumu', 'Sabahları kullan', '🍊', true),
-    _RoutineStep('Nemlendirici', 'Hafif vur vuruşla uygula', '🌿', false),
-    _RoutineStep('SPF 50+ Güneş Kremi', 'Son adım — ZORUNLU', '☀️', false),
+  List<dynamic> _morningSteps = [];
+  List<dynamic> _eveningSteps = [];
+  List<dynamic> _conflicts = [];
+  bool _isLoading = true;
+
+  // Mock data — backend bağlanamadığında gösterilir
+  final _mockMorning = [
+    {'stepName': 'Yüz Temizleyici', 'description': 'Nazikçe 60 sn. uygula', 'warning': ''},
+    {'stepName': 'Tonik', 'description': 'Pamukla silerek uygula', 'warning': ''},
+    {'stepName': 'C Vitamini Serumu', 'description': 'Sabahları kullan', 'warning': 'Retinol ile aynı anda kullanmayın'},
+    {'stepName': 'Nemlendirici', 'description': 'Hafif vur vuruşla uygula', 'warning': ''},
+    {'stepName': 'SPF 50+ Güneş Kremi', 'description': 'Son adım — ZORUNLU', 'warning': ''},
   ];
 
-  final _eveningSteps = [
-    _RoutineStep('Makyaj Temizleyici Yağ', 'Çift temizleme - 1. adım', '🌙', false),
-    _RoutineStep('Yüz Temizleyici', 'Köpürtüp durulayın', '☁️', false),
-    _RoutineStep('Tonik', '30 sn. bekleyin', '💧', false),
-    _RoutineStep('Retinol Serumu', 'Haftada 2-3x kullan', '⭐', true),
-    _RoutineStep('Ağır Nemlendirici', 'Gece kremi', '🌸', false),
+  final _mockEvening = [
+    {'stepName': 'Makyaj Temizleyici Yağ', 'description': 'Çift temizleme - 1. adım', 'warning': ''},
+    {'stepName': 'Yüz Temizleyici', 'description': 'Köpürtüp durulayın', 'warning': ''},
+    {'stepName': 'Tonik', 'description': '30 sn. bekleyin', 'warning': ''},
+    {'stepName': 'Retinol Serumu', 'description': 'Haftada 2-3x kullan', 'warning': 'C Vitamini ile aynı gece kullanmayın'},
+    {'stepName': 'Ağır Nemlendirici', 'description': 'Gece kremi', 'warning': ''},
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadRoutines();
+  }
+
+  Future<void> _loadRoutines() async {
+    if (widget.token == null || widget.skinType == null ||
+        widget.token!.isEmpty || widget.skinType!.isEmpty) {
+      // Token veya skinType yok — mock data kullan
+      setState(() {
+        _morningSteps = _mockMorning;
+        _eveningSteps = _mockEvening;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final morningResult = await RoutineService.getMorningRoutine(
+        skinType: widget.skinType!,
+        token: widget.token!,
+      );
+
+      final eveningResult = await RoutineService.getEveningRoutine(
+        skinType: widget.skinType!,
+        token: widget.token!,
+      );
+
+      final morning = (morningResult['routine'] as List?) ?? [];
+      final evening = (eveningResult['routine'] as List?) ?? [];
+
+      // Çakışma kontrolü
+      final allIngredients = [
+        ...morning.map((s) => s['stepName']?.toString() ?? ''),
+        ...evening.map((s) => s['stepName']?.toString() ?? ''),
+      ].where((s) => s.isNotEmpty).toList();
+
+      List<dynamic> conflicts = [];
+      if (allIngredients.isNotEmpty) {
+        final conflictResult = await RoutineService.checkConflicts(
+          ingredients: allIngredients,
+          token: widget.token!,
+        );
+        conflicts = (conflictResult['conflicts'] as List?) ?? [];
+      }
+
+      if (mounted) {
+        setState(() {
+          _morningSteps = morning.isNotEmpty ? morning : _mockMorning;
+          _eveningSteps = evening.isNotEmpty ? evening : _mockEvening;
+          _conflicts = conflicts;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _morningSteps = _mockMorning;
+          _eveningSteps = _mockEvening;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -57,120 +127,207 @@ class _RoutineScreenState extends State<RoutineScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.deepPurple))
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildRoutineTab(_morningSteps, isMorning: true),
+                _buildRoutineTab(_eveningSteps, isMorning: false),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildRoutineTab(List<dynamic> steps, {required bool isMorning}) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        // Çakışma uyarıları
+        if (_conflicts.isNotEmpty) ...[
+          ..._conflicts.map((c) => _ConflictBanner(message: c.toString())),
+          const SizedBox(height: 8),
+        ],
+
+        // Rutin adımları
+        ...steps.asMap().entries.map((entry) {
+          final i = entry.key;
+          final step = entry.value;
+          return _RoutineStepCard(
+            stepNumber: i + 1,
+            name: step['stepName']?.toString() ?? 'Adım ${i + 1}',
+            description: step['description']?.toString() ?? '',
+            warning: step['warning']?.toString() ?? '',
+            isMorning: isMorning,
+          );
+        }),
+      ],
+    );
+  }
+}
+
+// Çakışma uyarı banner'ı
+class _ConflictBanner extends StatelessWidget {
+  final String message;
+  const _ConflictBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF0F0),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFFCCCC)),
+      ),
+      child: Row(
         children: [
-          _buildRoutineList(_morningSteps, isMorning: true),
-          _buildRoutineList(_eveningSteps, isMorning: false),
+          const Icon(Icons.warning_amber_rounded,
+            color: Color(0xFFE05252), size: 24),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFFB03030),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-
-  Widget _buildRoutineList(List<_RoutineStep> steps, {required bool isMorning}) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(24),
-      itemCount: steps.length,
-      itemBuilder: (context, i) {
-        final step = steps[i];
-        return _RoutineStepCard(
-          step: step,
-          stepNumber: i + 1,
-          isMorning: isMorning,
-          onToggle: (checked) => setState(() => step.completed = checked),
-        );
-      },
-    );
-  }
 }
 
-class _RoutineStep {
+// Rutin adım kartı
+class _RoutineStepCard extends StatefulWidget {
+  final int stepNumber;
   final String name;
   final String description;
-  final String emoji;
-  final bool isCaution;
-  bool completed;
-  _RoutineStep(this.name, this.description, this.emoji, this.isCaution,
-      {this.completed = false});
-}
-
-class _RoutineStepCard extends StatelessWidget {
-  final _RoutineStep step;
-  final int stepNumber;
+  final String warning;
   final bool isMorning;
-  final ValueChanged<bool> onToggle;
 
   const _RoutineStepCard({
-    required this.step,
     required this.stepNumber,
+    required this.name,
+    required this.description,
+    required this.warning,
     required this.isMorning,
-    required this.onToggle,
   });
+
+  @override
+  State<_RoutineStepCard> createState() => _RoutineStepCardState();
+}
+
+class _RoutineStepCardState extends State<_RoutineStepCard> {
+  bool _completed = false;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: step.completed
-            ? (isMorning ? AppColors.morningStep : AppColors.eveningStep)
+        color: _completed
+            ? (widget.isMorning ? AppColors.morningStep : AppColors.eveningStep)
             : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: step.isCaution
+          color: widget.warning.isNotEmpty
               ? const Color(0xFFFFCCCC)
               : AppColors.outline,
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 32, height: 32,
-            decoration: BoxDecoration(
-              color: step.completed
-                  ? AppColors.success
-                  : (isMorning ? AppColors.morningStep : AppColors.eveningStep),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: step.completed
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : Text('$stepNumber',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 13)),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Text(step.emoji, style: const TextStyle(fontSize: 22)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(step.name, style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 14)),
-                    if (step.isCaution) ...[
-                      const SizedBox(width: 6),
-                      const Icon(Icons.warning_amber_rounded,
-                        color: Color(0xFFE05252), size: 14),
-                    ],
-                  ],
+                Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: _completed
+                        ? AppColors.success
+                        : (widget.isMorning
+                            ? AppColors.morningStep
+                            : AppColors.eveningStep),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: _completed
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : Text('${widget.stepNumber}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 13)),
+                  ),
                 ),
-                Text(step.description, style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 12)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(widget.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 14)),
+                          ),
+                          if (widget.warning.isNotEmpty)
+                            const Icon(Icons.warning_amber_rounded,
+                              color: Color(0xFFE05252), size: 16),
+                        ],
+                      ),
+                      if (widget.description.isNotEmpty)
+                        Text(widget.description,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Checkbox(
+                  value: _completed,
+                  onChanged: (v) => setState(() => _completed = v ?? false),
+                  activeColor: AppColors.success,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5)),
+                ),
               ],
             ),
           ),
-          Checkbox(
-            value: step.completed,
-            onChanged: (v) => onToggle(v ?? false),
-            activeColor: AppColors.success,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5)),
-          ),
+
+          // Uyarı banner (adım altında)
+          if (widget.warning.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F0),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline,
+                      color: Color(0xFFE05252), size: 14),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(widget.warning,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFB03030),
+                        )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
