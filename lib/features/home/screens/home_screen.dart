@@ -38,8 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onRoutineTabRequested: () => setState(() => _currentIndex = 1),
       ),
       RoutineScreen(
-        token: widget.token,
         skinType: widget.skinType,
+        skinConcerns:widget.skinConcerns, // ← token kaldırıldı, concerns eklendi
       ),
       const ScanScreen(),
       const ProgressScreen(),

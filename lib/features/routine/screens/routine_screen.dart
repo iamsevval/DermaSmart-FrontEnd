@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../services/routine_service.dart';
+import '../../../services/routine_logic.dart';
 
 class RoutineScreen extends StatefulWidget {
-  final String? token;
   final String? skinType;
-  const RoutineScreen({super.key, this.token, this.skinType});
+  final List<String> skinConcerns;
+
+  const RoutineScreen({
+    super.key,
+    this.skinType,
+    this.skinConcerns = const [],
+  });
 
   @override
   State<RoutineScreen> createState() => _RoutineScreenState();
@@ -14,94 +19,33 @@ class RoutineScreen extends StatefulWidget {
 class _RoutineScreenState extends State<RoutineScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  List<dynamic> _morningSteps = [];
-  List<dynamic> _eveningSteps = [];
-  List<dynamic> _conflicts = [];
-  bool _isLoading = true;
-
-  // Mock data — backend bağlanamadığında gösterilir
-  final _mockMorning = [
-    {'stepName': 'Yüz Temizleyici', 'description': 'Nazikçe 60 sn. uygula', 'warning': ''},
-    {'stepName': 'Tonik', 'description': 'Pamukla silerek uygula', 'warning': ''},
-    {'stepName': 'C Vitamini Serumu', 'description': 'Sabahları kullan', 'warning': 'Retinol ile aynı anda kullanmayın'},
-    {'stepName': 'Nemlendirici', 'description': 'Hafif vur vuruşla uygula', 'warning': ''},
-    {'stepName': 'SPF 50+ Güneş Kremi', 'description': 'Son adım — ZORUNLU', 'warning': ''},
-  ];
-
-  final _mockEvening = [
-    {'stepName': 'Makyaj Temizleyici Yağ', 'description': 'Çift temizleme - 1. adım', 'warning': ''},
-    {'stepName': 'Yüz Temizleyici', 'description': 'Köpürtüp durulayın', 'warning': ''},
-    {'stepName': 'Tonik', 'description': '30 sn. bekleyin', 'warning': ''},
-    {'stepName': 'Retinol Serumu', 'description': 'Haftada 2-3x kullan', 'warning': 'C Vitamini ile aynı gece kullanmayın'},
-    {'stepName': 'Ağır Nemlendirici', 'description': 'Gece kremi', 'warning': ''},
-  ];
+  late List<Map<String, String>> _morningSteps;
+  late List<Map<String, String>> _eveningSteps;
+  late List<Map<String, dynamic>> _conflicts;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadRoutines();
+    _buildRoutine();
   }
 
-  Future<void> _loadRoutines() async {
-    if (widget.token == null || widget.skinType == null ||
-        widget.token!.isEmpty || widget.skinType!.isEmpty) {
-      // Token veya skinType yok — mock data kullan
-      setState(() {
-        _morningSteps = _mockMorning;
-        _eveningSteps = _mockEvening;
-        _isLoading = false;
-      });
-      return;
-    }
+  void _buildRoutine() {
+    final skinType = widget.skinType ?? 'Normal';
+    final concerns = widget.skinConcerns;
 
-    try {
-      final morningResult = await RoutineService.getMorningRoutine(
-        skinType: widget.skinType!,
-        token: widget.token!,
-      );
-
-      final eveningResult = await RoutineService.getEveningRoutine(
-        skinType: widget.skinType!,
-        token: widget.token!,
-      );
-
-      final morning = (morningResult['routine'] as List?) ?? [];
-      final evening = (eveningResult['routine'] as List?) ?? [];
-
-      // Çakışma kontrolü
-      final allIngredients = [
-        ...morning.map((s) => s['stepName']?.toString() ?? ''),
-        ...evening.map((s) => s['stepName']?.toString() ?? ''),
-      ].where((s) => s.isNotEmpty).toList();
-
-      List<dynamic> conflicts = [];
-      if (allIngredients.isNotEmpty) {
-        final conflictResult = await RoutineService.checkConflicts(
-          ingredients: allIngredients,
-          token: widget.token!,
-        );
-        conflicts = (conflictResult['conflicts'] as List?) ?? [];
-      }
-
-      if (mounted) {
-        setState(() {
-          _morningSteps = morning.isNotEmpty ? morning : _mockMorning;
-          _eveningSteps = evening.isNotEmpty ? evening : _mockEvening;
-          _conflicts = conflicts;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _morningSteps = _mockMorning;
-          _eveningSteps = _mockEvening;
-          _isLoading = false;
-        });
-      }
-    }
+    _morningSteps = RoutineLogic.getMorningRoutine(
+      skinType: skinType,
+      skinConcerns: concerns,
+    );
+    _eveningSteps = RoutineLogic.getEveningRoutine(
+      skinType: skinType,
+      skinConcerns: concerns,
+    );
+    _conflicts = RoutineLogic.checkConflicts(
+      morningSteps: _morningSteps,
+      eveningSteps: _eveningSteps,
+    );
   }
 
   @override
@@ -127,38 +71,66 @@ class _RoutineScreenState extends State<RoutineScreen>
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple))
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildRoutineTab(_morningSteps, isMorning: true),
-                _buildRoutineTab(_eveningSteps, isMorning: false),
-              ],
-            ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildRoutineTab(_morningSteps, isMorning: true),
+          _buildRoutineTab(_eveningSteps, isMorning: false),
+        ],
+      ),
     );
   }
 
-  Widget _buildRoutineTab(List<dynamic> steps, {required bool isMorning}) {
+  Widget _buildRoutineTab(
+      List<Map<String, String>> steps, {required bool isMorning}) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
         // Çakışma uyarıları
         if (_conflicts.isNotEmpty) ...[
-          ..._conflicts.map((c) => _ConflictBanner(message: c.toString())),
+          ...(_conflicts.map((c) => _ConflictBanner(
+                message: c['message'] ?? '',
+                isCritical: c['severity'] == 'critical',
+              ))),
           const SizedBox(height: 8),
         ],
 
-        // Rutin adımları
+        // Cilt tipi etiketi
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.deepPurple.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.deepPurple.shade100),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.face_retouching_natural,
+                  color: Colors.deepPurple, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Cilt Tipiniz: ${widget.skinType ?? "Belirsiz"} — Kişisel rutin',
+                style: const TextStyle(
+                  color: Colors.deepPurple,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Adımlar
         ...steps.asMap().entries.map((entry) {
           final i = entry.key;
           final step = entry.value;
           return _RoutineStepCard(
             stepNumber: i + 1,
-            name: step['stepName']?.toString() ?? 'Adım ${i + 1}',
-            description: step['description']?.toString() ?? '',
-            warning: step['warning']?.toString() ?? '',
+            name: step['stepName'] ?? '',
+            description: step['description'] ?? '',
+            warning: step['warning'] ?? '',
             isMorning: isMorning,
           );
         }),
@@ -167,33 +139,39 @@ class _RoutineScreenState extends State<RoutineScreen>
   }
 }
 
-// Çakışma uyarı banner'ı
 class _ConflictBanner extends StatelessWidget {
   final String message;
-  const _ConflictBanner({required this.message});
+  final bool isCritical;
+  const _ConflictBanner({required this.message, this.isCritical = false});
 
   @override
   Widget build(BuildContext context) {
+    final color = isCritical ? Colors.red : Colors.amber;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF0F0),
+        color: color.shade50,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFCCCC)),
+        border: Border.all(color: color.shade200),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded,
-            color: Color(0xFFE05252), size: 24),
+          Icon(
+            isCritical ? Icons.gpp_bad_outlined : Icons.warning_amber_rounded,
+            color: color.shade800,
+            size: 22,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFFB03030),
+                color: color.shade900,
                 fontWeight: FontWeight.w500,
+                height: 1.4,
               ),
             ),
           ),
@@ -203,7 +181,6 @@ class _ConflictBanner extends StatelessWidget {
   }
 }
 
-// Rutin adım kartı
 class _RoutineStepCard extends StatefulWidget {
   final int stepNumber;
   final String name;
@@ -248,7 +225,8 @@ class _RoutineStepCardState extends State<_RoutineStepCard> {
             child: Row(
               children: [
                 Container(
-                  width: 32, height: 32,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: _completed
                         ? AppColors.success
@@ -262,7 +240,7 @@ class _RoutineStepCardState extends State<_RoutineStepCard> {
                         ? const Icon(Icons.check, size: 16, color: Colors.white)
                         : Text('${widget.stepNumber}',
                             style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 13)),
+                                fontWeight: FontWeight.w700, fontSize: 13)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -274,18 +252,18 @@ class _RoutineStepCardState extends State<_RoutineStepCard> {
                         children: [
                           Expanded(
                             child: Text(widget.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 14)),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 14)),
                           ),
                           if (widget.warning.isNotEmpty)
                             const Icon(Icons.warning_amber_rounded,
-                              color: Color(0xFFE05252), size: 16),
+                                color: Color(0xFFE05252), size: 16),
                         ],
                       ),
                       if (widget.description.isNotEmpty)
                         Text(widget.description,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 12)),
+                            style: const TextStyle(
+                                color: AppColors.textSecondary, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -294,20 +272,18 @@ class _RoutineStepCardState extends State<_RoutineStepCard> {
                   onChanged: (v) => setState(() => _completed = v ?? false),
                   activeColor: AppColors.success,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5)),
+                      borderRadius: BorderRadius.circular(5)),
                 ),
               ],
             ),
           ),
-
-          // Uyarı banner (adım altında)
           if (widget.warning.isNotEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF0F0),
                   borderRadius: BorderRadius.circular(8),
@@ -315,14 +291,12 @@ class _RoutineStepCardState extends State<_RoutineStepCard> {
                 child: Row(
                   children: [
                     const Icon(Icons.info_outline,
-                      color: Color(0xFFE05252), size: 14),
+                        color: Color(0xFFE05252), size: 14),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(widget.warning,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFB03030),
-                        )),
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xFFB03030))),
                     ),
                   ],
                 ),
