@@ -94,6 +94,7 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (profileCheck.statusCode == 200) {
         final profileData = jsonDecode(profileCheck.body);
+        print('Profile data: ${profileCheck.body}');
         final fullProfile = UserProfileModel.fromJson(profileData);
         fullProfile.token = result['token'];
         fullProfile.email = _emailCtrl.text.trim();
@@ -104,10 +105,11 @@ class _LoginScreenState extends State<LoginScreen>
           MaterialPageRoute(
             builder: (_) => HomeScreen(
               userName: fullProfile.name,
-              email: fullProfile.email,
+              email: _emailCtrl.text.trim(),
               token: result['token'],
               skinType: fullProfile.skinType,
               skinConcerns: fullProfile.skinConcerns,
+              userId: result['userId'],
             ),
           ),
         );

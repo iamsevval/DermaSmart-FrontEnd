@@ -1,76 +1,372 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:table_calendar/table_calendar.dart';
+import '../../../services/tracking_service.dart';
 
-class ProgressScreen extends StatelessWidget {
-  const ProgressScreen({super.key});
+class ProgressScreen extends StatefulWidget {
+  final String? token;
+  final int? userId;
+  const ProgressScreen({super.key, this.token, this.userId});
+
+  @override
+  State<ProgressScreen> createState() => _ProgressScreenState();
+}
+
+class _ProgressScreenState extends State<ProgressScreen> {
+  int _streak = 0;
+  int _totalDays = 0;
+  Set<DateTime> _completedDays = {};
+  bool _isLoading = true;
+  DateTime _focusedDay = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  @override
+  void didUpdateWidget(ProgressScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final result = await TrackingService.getHistory(
+      token: widget.token ?? '',
+      userId: widget.userId ?? 0,
+    );
+
+    final List<dynamic> days = result['completedDays'] ?? [];
+    final Set<DateTime> completedDays = days.map((d) {
+      final parts = d.toString().split('-');
+      return DateTime(
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+        int.parse(parts[2]),
+      );
+    }).toSet();
+
+    // Bugün tüm adımlar tamamlandıysa bugünü de ekle
+    if (mounted) {
+      setState(() {
+        _completedDays = completedDays;
+        _streak = result['streak'] ?? 0;
+        _totalDays = completedDays.length;
+        _isLoading = false;
+      });
+    }
+  }
+
+  bool _isDayCompleted(DateTime day) {
+    return _completedDays.any(
+        (d) => d.year == day.year && d.month == day.month && d.day == day.day);
+  }
+
+  Widget _buildCompletedDay(DateTime day) {
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.green.shade400,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '${day.day}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('İlerleme')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        title: const Text('İlerleme'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.deepPurple))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Streak banner
+                  _buildStreakBanner(),
+                  const SizedBox(height: 20),
+
+                  // İstatistikler
+                  _buildStatsRow(),
+                  const SizedBox(height: 24),
+
+                  // Takvim başlığı
+                  const Text(
+                    'Rutin Takvimi',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tamamladığın günler yeşil ile gösteriliyor',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Takvim
+                  _buildCalendar(),
+                  const SizedBox(height: 20),
+
+                  // Açıklama
+                  _buildLegend(),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildStreakBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6B5EA8), Color(0xFF9B8FD4)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+          const Text('🔥', style: TextStyle(fontSize: 40)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatItem(value: '7', label: 'Gün Seri'),
-                _StatItem(value: '23', label: 'Toplam Gün'),
-                _StatItem(value: '85%', label: 'Uyum'),
+                Text(
+                  '$_streak Günlük Seri!',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _streak > 0
+                      ? 'Peş peşe $_streak gündür rutini bozmuyorsun! 💪'
+                      : 'Bugün rutinini tamamla ve seriyi başlat!',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.85),
+                  ),
+                ),
               ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text('Fotoğraf Takibi',
-            style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 6,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemBuilder: (_, i) => Container(
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                i == 0 ? Icons.add_a_photo_outlined : Icons.face,
-                color: i == 0 ? AppColors.primary : AppColors.textHint,
-              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildStatsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            value: '$_streak',
+            label: 'Gün Seri',
+            emoji: '🔥',
+            color: const Color(0xFFFFF3CD),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            value: '$_totalDays',
+            label: 'Toplam Gün',
+            emoji: '✅',
+            color: const Color(0xFFE8F5E9),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            value:
+                _totalDays > 0 ? '%${((_totalDays / 30) * 100).round()}' : '%0',
+            label: 'Bu Ay',
+            emoji: '📈',
+            color: const Color(0xFFE8E0F5),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: TableCalendar(
+        firstDay: DateTime.utc(2024, 1, 1),
+        lastDay: DateTime.utc(2026, 12, 31),
+        focusedDay: _focusedDay,
+        calendarFormat: CalendarFormat.month,
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          titleTextStyle: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+        calendarStyle: CalendarStyle(
+          todayDecoration: BoxDecoration(
+            color: Colors.deepPurple.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+          todayTextStyle: const TextStyle(
+            color: Colors.deepPurple,
+            fontWeight: FontWeight.w700,
+          ),
+          selectedDecoration: const BoxDecoration(
+            color: Colors.deepPurple,
+            shape: BoxShape.circle,
+          ),
+          outsideDaysVisible: false,
+        ),
+        calendarBuilders: CalendarBuilders(
+          defaultBuilder: (context, day, focusedDay) {
+            if (_isDayCompleted(day)) {
+              return _buildCompletedDay(day);
+            }
+            return null;
+          },
+          todayBuilder: (context, day, focusedDay) {
+            if (_isDayCompleted(day)) {
+              return _buildCompletedDay(day);
+            }
+            // Bugün tamamlanmadıysa normal mor göster
+            return Container(
+              margin: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  '${day.day}',
+                  style: const TextStyle(
+                    color: Colors.deepPurple,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        onPageChanged: (focusedDay) {
+          setState(() => _focusedDay = focusedDay);
+        },
+      ),
+    );
+  }
+
+  Widget _buildLegend() {
+    return Row(
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: Colors.green.shade400,
+            shape: BoxShape.circle,
+          ),
+          child: const Center(
+            child: Text('✓',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text('Rutin tamamlandı',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+        const SizedBox(width: 20),
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: Colors.deepPurple.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text('Bugün',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+      ],
+    );
+  }
 }
 
-class _StatItem extends StatelessWidget {
+class _StatCard extends StatelessWidget {
   final String value;
   final String label;
-  const _StatItem({required this.value, required this.label});
+  final String emoji;
+  final Color color;
+
+  const _StatCard({
+    required this.value,
+    required this.label,
+    required this.emoji,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(
-          fontSize: 28, fontWeight: FontWeight.w700,
-          color: AppColors.primary)),
-        Text(label, style: const TextStyle(
-          fontSize: 12, color: AppColors.textSecondary)),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 6),
+          Text(value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              )),
+          Text(label,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+              )),
+        ],
+      ),
     );
   }
 }

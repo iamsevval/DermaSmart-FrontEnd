@@ -5,14 +5,12 @@ class UserProfileModel {
   int? userId;
   String? skinType;
 
-  // Mini quiz details
   String? washFeeling;
   String? poreSize;
   String? shineLevel;
   String? flakiness;
   String? sensitivityResponse;
 
-  // Main survey
   String? ageRange;
   String? generalSensitivity;
   List<String> skinConcerns;
@@ -57,17 +55,24 @@ class UserProfileModel {
     this.budget,
   });
 
-  // Backend'den gelen veriyi modele çeviren kritik metod (SORUN 2 ve 3 ÇÖZÜMÜ İÇİN)
+  static String? _capitalize(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return value[0].toUpperCase() + value.substring(1);
+  }
+
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
     return UserProfileModel(
-      // Backend'den 'fullName' veya 'name' olarak gelebilir, ikisini de kontrol ediyoruz
       name: json['fullName'] ?? json['name'],
       email: json['email'],
       userId: json['userId'],
-      skinType: json['skinType'],
+      skinType: _capitalize(json['skinType']),
       skinConcerns: json['concerns'] != null &&
               json['concerns'].toString().isNotEmpty
-          ? json['concerns'].toString().split(',').map((e) => e.trim()).toList()
+          ? json['concerns']
+              .toString()
+              .split(',')
+              .map((e) => e.trim())
+              .toList()
           : [],
       washFeeling: json['washFeeling'],
       poreSize: json['poreSize'],
@@ -76,13 +81,13 @@ class UserProfileModel {
       sensitivityResponse: json['sensitivityResponse'],
       ageRange: json['ageRange'],
       generalSensitivity: json['generalSensitivity'],
-      // Liste verilerini güvenli bir şekilde çekiyoruz
       unevenSkinTone: json['unevenSkinTone'],
       eyeConcerns: List<String>.from(json['eyeConcerns'] ?? []),
       acneType: json['acneType'],
       allergies: json['allergies'],
       pregnancyStatus: json['pregnancyStatus'],
-      activeIngredients: List<String>.from(json['activeIngredients'] ?? []),
+      activeIngredients:
+          List<String>.from(json['activeIngredients'] ?? []),
       sunscreenUsage: json['sunscreenUsage'],
       makeupFrequency: json['makeupFrequency'],
       makeupRemoval: json['makeupRemoval'],
