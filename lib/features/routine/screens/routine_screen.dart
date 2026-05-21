@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/routine_logic.dart';
+import '../../../services/tracking_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RoutineScreen extends StatefulWidget {
   final String? skinType;
-  final List<String> skinConcerns;
+  final List skinConcerns;
+  final String? token;
+  final int? userId;
 
   const RoutineScreen({
     super.key,
     this.skinType,
     this.skinConcerns = const [],
+    this.token,
+    this.userId,
   });
 
   @override
@@ -23,6 +29,9 @@ class _RoutineScreenState extends State<RoutineScreen>
   late List<Map<String, String>> _eveningSteps;
   late List<Map<String, dynamic>> _conflicts;
 
+  int _completedMorningCount = 0;
+  int _completedEveningCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +41,7 @@ class _RoutineScreenState extends State<RoutineScreen>
 
   void _buildRoutine() {
     final skinType = widget.skinType ?? 'Normal';
-    final concerns = widget.skinConcerns;
+    final concerns = widget.skinConcerns.cast<String>().toList();
 
     _morningSteps = RoutineLogic.getMorningRoutine(
       skinType: skinType,
@@ -46,6 +55,26 @@ class _RoutineScreenState extends State<RoutineScreen>
       morningSteps: _morningSteps,
       eveningSteps: _eveningSteps,
     );
+  }
+
+  void _onAllStepsCompleted() async {
+    // Bugünü tamamlandı olarak işaretle
+    if (widget.token != null && widget.userId != null) {
+      await TrackingService.completeStep(
+        token: widget.token!,
+        userId: widget.userId!,
+        stepId: 0, // Günün tamamlandığını işaretler
+      );
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🎉 Tebrikler! Bugünkü rutinin tamamlandı!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -81,8 +110,8 @@ class _RoutineScreenState extends State<RoutineScreen>
     );
   }
 
-  Widget _buildRoutineTab(
-      List<Map<String, String>> steps, {required bool isMorning}) {
+  Widget _buildRoutineTab(List<Map<String, String>> steps,
+      {required bool isMorning}) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -132,6 +161,22 @@ class _RoutineScreenState extends State<RoutineScreen>
             description: step['description'] ?? '',
             warning: step['warning'] ?? '',
             isMorning: isMorning,
+            token: widget.token,
+            userId: widget.userId,
+            onCompleted: () {
+              if (isMorning) {
+                setState(() => _completedMorningCount++);
+              } else {
+                setState(() => _completedEveningCount++);
+              }
+              // Tüm adımlar tamamlandıysa progress ekranını güncelle
+              final totalMorning = _morningSteps.length;
+              final totalEvening = _eveningSteps.length;
+              if (_completedMorningCount >= totalMorning &&
+                  _completedEveningCount >= totalEvening) {
+                _onAllStepsCompleted();
+              }
+            },
           );
         }),
       ],
@@ -187,6 +232,9 @@ class _RoutineStepCard extends StatefulWidget {
   final String description;
   final String warning;
   final bool isMorning;
+  final String? token;
+  final int? userId;
+  final VoidCallback? onCompleted;
 
   const _RoutineStepCard({
     required this.stepNumber,
@@ -194,17 +242,46 @@ class _RoutineStepCard extends StatefulWidget {
     required this.description,
     required this.warning,
     required this.isMorning,
+    this.token,
+    this.userId,
+    this.onCompleted,
   });
 
   @override
   State<_RoutineStepCard> createState() => _RoutineStepCardState();
 }
 
-class _RoutineStepCardState extends State<_RoutineStepCard> {
+class _RoutineStepCardState extends State<_RoutineStepCard>
+    with AutomaticKeepAliveClientMixin {
   bool _completed = false;
+  String get _storageKey => 'routine_${widget.isMorning}_${widget.stepNumber}';
 
   @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      _completed = prefs.getBool(_storageKey) ?? false;
+    });
+  }
+
+  Future<void> _saveState(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_storageKey, value);
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -269,7 +346,23 @@ class _RoutineStepCardState extends State<_RoutineStepCard> {
                 ),
                 Checkbox(
                   value: _completed,
-                  onChanged: (v) => setState(() => _completed = v ?? false),
+                  onChanged: (v) async {
+                    final checked = v ?? false;
+
+                    setState(() => _completed = checked);
+
+                    await _saveState(checked);
+
+                    if (checked &&
+                        widget.token != null &&
+                        widget.userId != null) {
+                      await TrackingService.completeStep(
+                        token: widget.token!,
+                        userId: widget.userId!,
+                        stepId: widget.stepNumber,
+                      );
+                    }
+                  },
                   activeColor: AppColors.success,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5)),

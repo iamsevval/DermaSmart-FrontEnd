@@ -26,7 +26,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                  colors: [Color(0xFF6B5EA8), Color(0xFF9B8FD4)]),
+                colors: [Color(0xFF6B5EA8), Color(0xFF9B8FD4)]),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -35,37 +35,39 @@ class ProfileScreen extends StatelessWidget {
                   radius: 32,
                   backgroundColor: Colors.white24,
                   child: Text(
-                      userName != null && userName!.isNotEmpty
-                          ? userName![0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                          fontSize: 28,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700)),
+                    userName != null && userName!.isNotEmpty
+                        ? userName![0].toUpperCase()
+                        : '?',
+                    style: const TextStyle(
+                      fontSize: 28, color: Colors.white,
+                      fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userName ?? 'Kullanıcı',
-                      style: const TextStyle(
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName ?? 'Kullanıcı',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 16),
-                    ),
-                    Text(
-                      email ?? '',
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                  ],
+                      ),
+                      Text(
+                        email ?? '',
+                        style: const TextStyle(
+                          color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          Text('Cilt Profili', style: Theme.of(context).textTheme.titleLarge),
+          Text('Cilt Profili',
+            style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -75,31 +77,44 @@ class ProfileScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Cilt Tipi:
                 ListTile(
                   leading: const Icon(Icons.face, color: Colors.deepPurple),
                   title: const Text('Cilt Tipim'),
                   trailing: Text(
                     skinType ?? 'Belirsiz',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
+                    style: const TextStyle(color: Colors.grey)),
                 ),
-
-// Hassasiyet — bu veri şu an backend'de yok, geçici olarak kaldır ya da gizle:
-// (generalSensitivity kaydedilmiyordu)
-
-// Endişelerim:
                 ListTile(
                   leading: const Icon(Icons.playlist_add_check,
-                      color: Colors.deepPurple),
+                    color: Colors.deepPurple),
                   title: const Text('Endişelerim'),
                   trailing: Text(
-                    skinConcerns.isEmpty
-                        ? 'Yok'
-                        : '${skinConcerns.length} seçili',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
+                    skinConcerns.isNotEmpty
+                        ? '${skinConcerns.length} seçili'
+                        : 'Yok',
+                    style: const TextStyle(color: Colors.grey)),
                 ),
+                if (skinConcerns.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: skinConcerns.map((c) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.deepPurple.shade200),
+                        ),
+                        child: Text(c,
+                          style: const TextStyle(
+                            fontSize: 12, color: Colors.deepPurple)),
+                      )).toList(),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -107,12 +122,14 @@ class ProfileScreen extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () {
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const SplashScreen()),
+                MaterialPageRoute(
+                  builder: (_) => const SplashScreen()),
                 (route) => false,
               );
             },
             icon: const Icon(Icons.logout, color: Colors.red),
-            label: const Text('Çıkış Yap', style: TextStyle(color: Colors.red)),
+            label: const Text('Çıkış Yap',
+              style: TextStyle(color: Colors.red)),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Colors.red),
             ),

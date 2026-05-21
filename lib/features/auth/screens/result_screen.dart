@@ -291,6 +291,7 @@ class _ResultScreenState extends State<ResultScreen> {
                               token: widget.userProfile.token,
                               skinType: widget.userProfile.skinType,
                               skinConcerns: widget.userProfile.skinConcerns,
+                              userId: widget.userProfile.userId,
                             ),
                           ),
                           (route) => false,

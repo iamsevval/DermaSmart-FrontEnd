@@ -10,6 +10,7 @@ class HomeScreen extends StatefulWidget {
   final String? token;
   final String? skinType; // ← EKLE
   final List<String> skinConcerns; // ← EKLE
+  final int? userId;
 
   const HomeScreen({
     super.key,
@@ -18,6 +19,7 @@ class HomeScreen extends StatefulWidget {
     this.token,
     this.skinType, // ← EKLE
     this.skinConcerns = const [], // ← EKLE
+    this.userId,
   });
 
   @override
@@ -27,32 +29,44 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
+  late final List<Widget> _screens;
+
   @override
-  Widget build(BuildContext context) {
-    final screens = [
+  void initState() {
+    super.initState();
+    _screens = [
       _HomeTab(
         userName: widget.userName,
         skinConcerns: widget.skinConcerns,
         onProfileTap: () => setState(() => _currentIndex = 4),
-        // 🔥 "Rutine Devam Et" butonuna basıldığında sadece Rutin Tab'ına (index 1) geçişi sağlar
         onRoutineTabRequested: () => setState(() => _currentIndex = 1),
       ),
       RoutineScreen(
         skinType: widget.skinType,
-        skinConcerns:widget.skinConcerns, // ← token kaldırıldı, concerns eklendi
+        skinConcerns: widget.skinConcerns,
+        token: widget.token,
+        userId: widget.userId,
       ),
       const ScanScreen(),
-      const ProgressScreen(),
+      ProgressScreen(
+        token: widget.token,
+        userId: widget.userId,
+      ),
       ProfileScreen(
         userName: widget.userName,
         email: widget.email,
-        skinType: widget.skinType, // ← EKLE
-        skinConcerns: widget.skinConcerns, // ← EKLE
+        skinType: widget.skinType,
+        skinConcerns: widget.skinConcerns,
       ),
     ];
+  }
 
+  Widget build(BuildContext context) {
     return Scaffold(
-      body: screens[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -260,32 +274,6 @@ class _HomeTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Streak banner (Orijinal haliyle korundu)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3CD),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Row(
-                  children: [
-                    Text('🔥', style: TextStyle(fontSize: 24)),
-                    SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('7 günlük seri!',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 15)),
-                        Text('Rutinine sadık kalıyorsun 💜',
-                            style: TextStyle(color: Colors.grey, fontSize: 13)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
 
               // 🔥 [US-07] ÇAKIŞMA KONTROLÜ VE GÖRSEL UYARI PANELİ
               if (skinConcerns.contains("Koyu Lekeler") &&
