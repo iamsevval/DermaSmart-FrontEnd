@@ -288,6 +288,7 @@ class _ResultScreenState extends State<ResultScreen> {
                             builder: (_) => HomeScreen(
                               userName: widget.userProfile.name,
                               email: widget.userProfile.email,
+                              token: widget.userProfile.token,
                               skinType: widget.userProfile.skinType,
                               skinConcerns: widget.userProfile.skinConcerns,
                             ),

@@ -105,6 +105,7 @@ class _LoginScreenState extends State<LoginScreen>
             builder: (_) => HomeScreen(
               userName: fullProfile.name,
               email: fullProfile.email,
+              token: result['token'],
               skinType: fullProfile.skinType,
               skinConcerns: fullProfile.skinConcerns,
             ),
