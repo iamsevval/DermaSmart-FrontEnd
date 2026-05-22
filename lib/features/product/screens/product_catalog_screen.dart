@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'product_detail_screen.dart';
+// import 'product_detail_screen.dart'; // Eğer GoRouter kullanıyorsan buna gerek kalmayabilir
+import 'package:dermasmart/services/product_service.dart';
 
-// ── Mock Data ──────────────────────────────────────────────────────────────
+// ── Model ──────────────────────────────────────────────────────────────
 
 class Product {
   final String id;
@@ -24,98 +25,33 @@ class Product {
     required this.ingredients,
     required this.purpose,
   });
-}
 
-final List<Product> mockProducts = [
-  Product(
-    id: '1',
-    name: 'Hydra Boost Serum',
-    brand: 'ClearDerm',
-    imageUrl: 'https://placehold.co/300x300/e8f4f8/2c7da0?text=Serum',
-    skinType: 'Kuru Cilt',
-    price: 249.90,
-    ingredients: ['Hyaluronic Acid', 'Niacinamide', 'Ceramide NP', 'Panthenol'],
-    purpose:
-    'Derin nemlendirme sağlayan bu serum, kuru ve hassas ciltler için özel olarak formüle edilmiştir. Hyaluronic Acid içeriği ile cildin nem dengesini 24 saat boyunca korur.',
-  ),
-  Product(
-    id: '2',
-    name: 'Mattify Control Gel',
-    brand: 'SkinLab',
-    imageUrl: 'https://placehold.co/300x300/f0f4e8/4a7c59?text=Gel',
-    skinType: 'Yağlı Cilt',
-    price: 189.50,
-    ingredients: ['Salicylic Acid %2', 'Zinc PCA', 'Niacinamide', 'Aloe Vera'],
-    purpose:
-    'Yağlı ve karma ciltler için tasarlanan bu nemlendirici jel, gözenekleri minimize ederken cildi mat ve dengeli tutar. Salisilik asit içeriği ile sivilce oluşumunu önler.',
-  ),
-  Product(
-    id: '3',
-    name: 'Calm & Repair Cream',
-    brand: 'DermaPure',
-    imageUrl: 'https://placehold.co/300x300/f8ece8/c1666b?text=Cream',
-    skinType: 'Hassas Cilt',
-    price: 312.00,
-    ingredients: ['Centella Asiatica', 'Allantoin', 'Ceramide EOP', 'Bisabolol'],
-    purpose:
-    'Hassas ve reaktif ciltler için geliştirilen bu yatıştırıcı krem, kızarıklık ve tahrişi giderir. Centella Asiatica\'nın iyileştirici gücü ile cilt bariyerini güçlendirir.',
-  ),
-  Product(
-    id: '4',
-    name: 'Vitamin C Glow Drops',
-    brand: 'LumiSkin',
-    imageUrl: 'https://placehold.co/300x300/fff8e1/f4a261?text=Drops',
-    skinType: 'Normal Cilt',
-    price: 275.00,
-    ingredients: ['Ascorbic Acid %15', 'Vitamin E', 'Ferulic Acid', 'Rosehip Oil'],
-    purpose:
-    'Normal ve karma ciltlere parlaklık kazandıran bu serum, melanin sentezini baskılayarak cilt tonunu eşitler. Antioksidan formülü ile çevresel hasara karşı koruma sağlar.',
-  ),
-  Product(
-    id: '5',
-    name: 'AHA/BHA Exfoliant Toner',
-    brand: 'SkinLab',
-    imageUrl: 'https://placehold.co/300x300/ede7f6/7c4dff?text=Toner',
-    skinType: 'Karma Cilt',
-    price: 198.00,
-    ingredients: ['Glycolic Acid %7', 'Salicylic Acid %1', 'Lactic Acid', 'Witch Hazel'],
-    purpose:
-    'Karma ciltler için ideal olan bu peeling toner, hem yağlı bölgeleri hem de kuru alanları dengeler. Ölü deri hücrelerini arındırarak pürüzsüz ve aydınlık bir cilt görünümü sunar.',
-  ),
-  Product(
-    id: '6',
-    name: 'Moisture Barrier Balm',
-    brand: 'ClearDerm',
-    imageUrl: 'https://placehold.co/300x300/e8f5e9/388e3c?text=Balm',
-    skinType: 'Kuru Cilt',
-    price: 220.00,
-    ingredients: ['Shea Butter', 'Squalane', 'Ceramide AP', 'Cholesterol'],
-    purpose:
-    'Çok kuru ve hassas ciltlerin nem bariyerini onarır. Zengin ve besleyici formülü ile cildi dış etkenlerden korurken yoğun bir nem hissi bırakır.',
-  ),
-  Product(
-    id: '7',
-    name: 'Pore Minimizer Essence',
-    brand: 'DermaPure',
-    imageUrl: 'https://placehold.co/300x300/fce4ec/e91e63?text=Essence',
-    skinType: 'Yağlı Cilt',
-    price: 165.90,
-    ingredients: ['Niacinamide %10', 'Zinc %1', 'Tranexamic Acid', 'Green Tea Extract'],
-    purpose:
-    'Genişlemiş gözenekleri sıkılaştıran ve cilt dokusunu düzenleyen bu esas, yağlı ciltlerde sebum üretimini dengeler. Düzenli kullanımda gözenek görünümünü belirgin şekilde azaltır.',
-  ),
-  Product(
-    id: '8',
-    name: 'Collagen Boost Night Cream',
-    brand: 'LumiSkin',
-    imageUrl: 'https://placehold.co/300x300/e3f2fd/1565c0?text=Night',
-    skinType: 'Normal Cilt',
-    price: 389.00,
-    ingredients: ['Retinol %0.5', 'Peptides Complex', 'Hyaluronic Acid', 'Bakuchiol'],
-    purpose:
-    'Gece boyunca çalışan bu anti-aging krem, uyku sırasında cildin yenilenme sürecini destekler. Retinol ve peptid kompleksi ile kırışıklıkları azaltır ve cilt elastikiyetini artırır.',
-  ),
-];
+  factory Product.fromJson(Map<String, dynamic> json) {
+    // Gelen İngilizce metni alıyoruz
+    String rawSkinTypes = json['skinTypes']?.toString().toLowerCase() ?? '';
+
+    // Ekranda güzel görünmesi için Türkçeye çeviriyoruz
+    String translatedSkinTypes = rawSkinTypes
+        .replaceAll('oily', 'Yağlı')
+        .replaceAll('dry', 'Kuru')
+        .replaceAll('combination', 'Karma')
+        .replaceAll('sensitive', 'Hassas')
+        .replaceAll('normal', 'Normal');
+
+    return Product(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? 'İsimsiz Ürün',
+      brand: 'DermaSmart',
+      imageUrl: 'https://placehold.co/300x300/e8f4f8/2c7da0?text=Ürün',
+      skinType: translatedSkinTypes.isEmpty ? 'Tümü' : translatedSkinTypes,
+      price: 199.90,
+      ingredients: json['ingredients'] != null
+          ? json['ingredients'].toString().split(',').map((e) => e.trim()).toList()
+          : [],
+      purpose: json['category'] ?? 'Detaylı açıklama bulunmuyor.',
+    );
+  }
+}
 
 // ── Skin Type Filters ──────────────────────────────────────────────────────
 
@@ -142,12 +78,44 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
+  // API'den gelecek ürünleri tutacağımız liste ve durum değişkenleri
+  List<Product> _allProducts = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts(); // Ekran açıldığında verileri çek
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final products = await ProductService.fetchProducts();
+      setState(() {
+        _allProducts = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Ürünler yüklenirken bir hata oluştu.\nBağlantınızı kontrol edin.";
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Filtreleme mantığını mockProducts yerine artık _allProducts üzerinden yapıyoruz
   List<Product> get _filteredProducts {
-    return mockProducts.where((p) {
-      final matchesSkin = _selectedFilter == 'Tümü' || p.skinType == _selectedFilter;
+    return _allProducts.where((p) {
+      // 1. Cilt Tipi Filtresi
+      final filterWord = _selectedFilter.replaceAll(' Cilt', '');
+      final matchesSkin = _selectedFilter == 'Tümü' || p.skinType.contains(filterWord);
+
+      // 2. Arama Filtresi
       final matchesSearch = _searchQuery.isEmpty ||
           p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           p.brand.toLowerCase().contains(_searchQuery.toLowerCase());
+
       return matchesSkin && matchesSearch;
     }).toList();
   }
@@ -170,7 +138,14 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
             _buildSearchBar(),
             _buildFilterChips(),
             _buildResultCount(),
-            Expanded(child: _buildProductGrid()),
+            // Yüklenme, hata veya liste durumuna göre ekranı çiziyoruz
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF2C7DA0)))
+                  : _errorMessage != null
+                  ? Center(child: Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)))
+                  : _buildProductGrid(),
+            ),
           ],
         ),
       ),
@@ -314,6 +289,8 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
   }
 
   Widget _buildResultCount() {
+    if (_isLoading) return const SizedBox.shrink(); // Yüklenirken sayıyı gizle
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Text(
@@ -375,7 +352,7 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
   }
 }
 
-// ── Product Card (ayrı StatelessWidget — context sorunu yok) ───────────────
+// ── Product Card ───────────────────────────────────────────────────────────
 
 class _ProductCard extends StatelessWidget {
   final Product product;
