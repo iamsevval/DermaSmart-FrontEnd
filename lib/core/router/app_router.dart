@@ -11,6 +11,7 @@ import '../../features/scan/screens/scan_screen.dart';
 import '../../features/progress/screens/progress_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/product/screens/product_detail_screen.dart';
+import '../../features/product/screens/product_catalog_screen.dart';
 import '../../shared/widgets/main_scaffold.dart';
 import '../constants/app_routes.dart';
 // MODEL IMPORTU EKLENDİ (Hata almamak için şart)
@@ -21,7 +22,8 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: AppRoutes.login, 
+  //initialLocation: AppRoutes.login,
+  initialLocation: '/catalog',
   routes: [
     GoRoute(
       path: AppRoutes.splash,
@@ -75,9 +77,13 @@ final GoRouter appRouter = GoRouter(
       path: '/product/:id',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
-        final productId = state.pathParameters['id']!;
-        return ProductDetailScreen(productId: productId);
+        final product = state.extra as Product;
+        return ProductDetailScreen(product: product);
       },
+    ),
+    GoRoute(
+      path: '/catalog',
+      builder: (context, state) => const ProductCatalogScreen(),
     ),
     GoRoute(
       path: AppRoutes.ingredientConflict,
