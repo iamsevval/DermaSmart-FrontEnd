@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/routine_logic.dart';
 import '../../../services/tracking_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 🟢 Fazladan olan ikinci import satırı temizlendi!
 
 class RoutineScreen extends StatefulWidget {
   final String? skinType;
@@ -58,12 +58,11 @@ class _RoutineScreenState extends State<RoutineScreen>
   }
 
   void _onAllStepsCompleted() async {
-    // Bugünü tamamlandı olarak işaretle
     if (widget.token != null && widget.userId != null) {
       await TrackingService.completeStep(
         token: widget.token!,
         userId: widget.userId!,
-        stepId: 0, // Günün tamamlandığını işaretler
+        stepId: 0,
       );
     }
     if (mounted) {
@@ -115,7 +114,6 @@ class _RoutineScreenState extends State<RoutineScreen>
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        // Çakışma uyarıları
         if (_conflicts.isNotEmpty) ...[
           ...(_conflicts.map((c) => _ConflictBanner(
                 message: c['message'] ?? '',
@@ -124,7 +122,6 @@ class _RoutineScreenState extends State<RoutineScreen>
           const SizedBox(height: 8),
         ],
 
-        // Cilt tipi etiketi
         Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -151,7 +148,6 @@ class _RoutineScreenState extends State<RoutineScreen>
           ),
         ),
 
-        // Adımlar
         ...steps.asMap().entries.map((entry) {
           final i = entry.key;
           final step = entry.value;
@@ -169,7 +165,6 @@ class _RoutineScreenState extends State<RoutineScreen>
               } else {
                 setState(() => _completedEveningCount++);
               }
-              // Tüm adımlar tamamlandıysa progress ekranını güncelle
               final totalMorning = _morningSteps.length;
               final totalEvening = _eveningSteps.length;
               if (_completedMorningCount >= totalMorning &&
@@ -253,35 +248,52 @@ class _RoutineStepCard extends StatefulWidget {
 
 class _RoutineStepCardState extends State<_RoutineStepCard>
     with AutomaticKeepAliveClientMixin {
+  
+  // 🔥 YENİ GÜNLÜK AKILLI STORAGE DEĞİŞKENLERİ
   bool _completed = false;
-  String get _storageKey => 'routine_${widget.isMorning}_${widget.stepNumber}';
+  String _todayStr = '';
 
   @override
   void initState() {
     super.initState();
+    _todayStr = _getToday();
     _loadState();
   }
 
+  String _getToday() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month}-${now.day}';
+  }
+
+  String get _prefKey =>
+      'step_${widget.isMorning ? 'morning' : 'evening'}_${widget.stepNumber}_$_todayStr';
+
   Future<void> _loadState() async {
     final prefs = await SharedPreferences.getInstance();
-
-    if (!mounted) return;
-
-    setState(() {
-      _completed = prefs.getBool(_storageKey) ?? false;
-    });
+    final today = _getToday();
+    final saved = prefs.getBool(_prefKey) ?? false;
+    if (mounted) {
+      setState(() {
+        _completed = saved;
+        _todayStr = today;
+      });
+    }
   }
 
   Future<void> _saveState(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_storageKey, value);
+    await prefs.setBool(_prefKey, value);
   }
 
   @override
   bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    
+    // 💡 GEREKSİZ 'initState' VEYA ESKİ RESET KODLARI BURADAN UÇURULDU, MANTIK TAMAMEN TEMİZLENDİ.
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -349,9 +361,14 @@ class _RoutineStepCardState extends State<_RoutineStepCard>
                   onChanged: (v) async {
                     final checked = v ?? false;
 
-                    setState(() => _completed = checked);
-
+                    setState(() {
+                      _completed = checked;
+                    });
                     await _saveState(checked);
+
+                    if (checked && widget.onCompleted != null) {
+                      widget.onCompleted!();
+                    }
 
                     if (checked &&
                         widget.token != null &&

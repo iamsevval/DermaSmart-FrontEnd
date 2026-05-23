@@ -33,7 +33,7 @@ class ProductDetailScreen extends StatelessWidget {
       leading: Padding(
         padding: const EdgeInsets.all(8),
         child: GestureDetector(
-          onTap: () => context.pop(),
+          onTap: () => Navigator.of(context).pop(),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.92),
@@ -90,12 +90,16 @@ class ProductDetailScreen extends StatelessWidget {
               errorBuilder: (_, __, ___) => Container(
                 color: AppColors.surfaceVariant,
                 child: const Center(
-                  child: Icon(Icons.spa_outlined, size: 64, color: AppColors.textHint),
+                  child: Icon(Icons.spa_outlined,
+                      size: 64, color: AppColors.textHint),
                 ),
               ),
             ),
             Positioned(
-              bottom: 0, left: 0, right: 0, height: 80,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 80,
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -155,9 +159,9 @@ class ProductDetailScreen extends StatelessWidget {
         Text(
           product.name,
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            letterSpacing: -0.5,
-            height: 1.15,
-          ),
+                letterSpacing: -0.5,
+                height: 1.15,
+              ),
         ),
         const SizedBox(height: 12),
         Text(
@@ -204,7 +208,8 @@ class ProductDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(context, icon: Icons.spa_outlined, label: 'Kullanım Amacı'),
+        _buildSectionTitle(context,
+            icon: Icons.spa_outlined, label: 'Kullanım Amacı'),
         const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.all(18),
@@ -236,7 +241,8 @@ class ProductDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(context, icon: Icons.science_outlined, label: 'Aktif Bileşenler'),
+        _buildSectionTitle(context,
+            icon: Icons.science_outlined, label: 'Aktif Bileşenler'),
         const SizedBox(height: 14),
         Wrap(
           spacing: 10,
@@ -275,13 +281,15 @@ class ProductDetailScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 7, height: 7,
+            width: 7,
+            height: 7,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           Text(
             ingredient,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w600, color: color),
           ),
         ],
       ),
@@ -294,7 +302,8 @@ class ProductDetailScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF8E6),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF4A261).withOpacity(0.3), width: 1),
+        border: Border.all(
+            color: const Color(0xFFF4A261).withOpacity(0.3), width: 1),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,8 +314,10 @@ class ProductDetailScreen extends StatelessWidget {
             child: Text(
               'Bileşenlere karşı alerjiniz varsa kullanmadan önce dermatoloğunuza danışmanızı öneririz.',
               style: TextStyle(
-                fontSize: 12, color: Color(0xFF9C7040),
-                height: 1.5, fontWeight: FontWeight.w500,
+                fontSize: 12,
+                color: Color(0xFF9C7040),
+                height: 1.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -315,7 +326,8 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, {required IconData icon, required String label}) {
+  Widget _buildSectionTitle(BuildContext context,
+      {required IconData icon, required String label}) {
     return Row(
       children: [
         Icon(icon, size: 20, color: AppColors.primary),
@@ -327,7 +339,8 @@ class ProductDetailScreen extends StatelessWidget {
 
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
+      padding: EdgeInsets.fromLTRB(
+          24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -341,12 +354,14 @@ class ProductDetailScreen extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 52, height: 52,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               border: Border.all(color: const Color(0xFFE0E8F0), width: 1.5),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.bookmark_border_rounded, color: AppColors.textSecondary, size: 22),
+            child: const Icon(Icons.bookmark_border_rounded,
+                color: AppColors.textSecondary, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(

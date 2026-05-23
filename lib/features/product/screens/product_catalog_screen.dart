@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 // import 'product_detail_screen.dart'; // Eğer GoRouter kullanıyorsan buna gerek kalmayabilir
 import 'package:dermasmart/services/product_service.dart';
+import 'product_detail_screen.dart';
 
 // ── Model ──────────────────────────────────────────────────────────────
 
@@ -46,7 +47,11 @@ class Product {
       skinType: translatedSkinTypes.isEmpty ? 'Tümü' : translatedSkinTypes,
       price: 199.90,
       ingredients: json['ingredients'] != null
-          ? json['ingredients'].toString().split(',').map((e) => e.trim()).toList()
+          ? json['ingredients']
+              .toString()
+              .split(',')
+              .map((e) => e.trim())
+              .toList()
           : [],
       purpose: json['category'] ?? 'Detaylı açıklama bulunmuyor.',
     );
@@ -98,7 +103,8 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = "Ürünler yüklenirken bir hata oluştu.\nBağlantınızı kontrol edin.";
+        _errorMessage =
+            "Ürünler yüklenirken bir hata oluştu.\nBağlantınızı kontrol edin.";
         _isLoading = false;
       });
     }
@@ -109,7 +115,8 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
     return _allProducts.where((p) {
       // 1. Cilt Tipi Filtresi
       final filterWord = _selectedFilter.replaceAll(' Cilt', '');
-      final matchesSkin = _selectedFilter == 'Tümü' || p.skinType.contains(filterWord);
+      final matchesSkin =
+          _selectedFilter == 'Tümü' || p.skinType.contains(filterWord);
 
       // 2. Arama Filtresi
       final matchesSearch = _searchQuery.isEmpty ||
@@ -134,7 +141,7 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1A2332)),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       backgroundColor: const Color(0xFFF8F5F2),
@@ -149,10 +156,15 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
             // Yüklenme, hata veya liste durumuna göre ekranı çiziyoruz
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF2C7DA0)))
+                  ? const Center(
+                      child:
+                          CircularProgressIndicator(color: Color(0xFF2C7DA0)))
                   : _errorMessage != null
-                  ? Center(child: Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)))
-                  : _buildProductGrid(),
+                      ? Center(
+                          child: Text(_errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.red)))
+                      : _buildProductGrid(),
             ),
           ],
         ),
@@ -223,19 +235,20 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
             ),
             suffixIcon: _searchQuery.isNotEmpty
                 ? GestureDetector(
-              onTap: () {
-                _searchController.clear();
-                setState(() => _searchQuery = '');
-              },
-              child: const Icon(
-                Icons.close_rounded,
-                color: Color(0xFF7B8FA6),
-                size: 20,
-              ),
-            )
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF7B8FA6),
+                      size: 20,
+                    ),
+                  )
                 : null,
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
           style: const TextStyle(
             fontSize: 15,
@@ -267,17 +280,19 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
                 color: isSelected ? const Color(0xFF2C7DA0) : Colors.white,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF2C7DA0) : const Color(0xFFE0E8F0),
+                  color: isSelected
+                      ? const Color(0xFF2C7DA0)
+                      : const Color(0xFFE0E8F0),
                   width: 1.5,
                 ),
                 boxShadow: isSelected
                     ? [
-                  BoxShadow(
-                    color: const Color(0xFF2C7DA0).withOpacity(0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
+                        BoxShadow(
+                          color: const Color(0xFF2C7DA0).withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
                     : [],
               ),
               child: Text(
@@ -353,7 +368,12 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
         final product = products[index];
         return _ProductCard(
           product: product,
-          onTap: () => context.push('/product/${product.id}', extra: product),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ProductDetailScreen(product: product),
+            ),
+          ),
         );
       },
     );
@@ -389,7 +409,8 @@ class _ProductCard extends StatelessWidget {
           children: [
             // Ürün resmi
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
               child: AspectRatio(
                 aspectRatio: 1,
                 child: Image.network(
@@ -418,7 +439,8 @@ class _ProductCard extends StatelessWidget {
                   children: [
                     // Cilt tipi badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE8F4F8),
                         borderRadius: BorderRadius.circular(6),
