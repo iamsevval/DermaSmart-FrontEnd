@@ -16,6 +16,8 @@ dependencies:
   http: ^1.6.0
   shared_preferences: ^2.2.2  # ← BU SATIRI EKLE
   table_calendar: ^3.2.0
+  flutter_native_splash: ^2.4.7
+  flutter_launcher_icons: ^0.14.4
 
 
 dev_dependencies:
@@ -25,3 +27,25 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/DermaAppIcon.jpeg
+    - assets/DermaSplash.jpeg
+
+flutter_native_splash:
+  color: "#2D1B69"
+  background_image: assets/DermaSplash.jpeg
+  android: true
+  ios: true
+  fullscreen: true
+  
+  android_12:
+    color: "#2D1B69"
+    background_image: assets/DermaSplash.jpeg
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/DermaAppIcon.jpeg"
+  min_sdk_android: 21
+  adaptive_icon_background: "#2D1B69"
+  adaptive_icon_foreground: "assets/DermaAppIcon.jpeg"

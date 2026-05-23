@@ -3,13 +3,14 @@ import '../../routine/screens/routine_screen.dart';
 import '../../scan/screens/scan_screen.dart';
 import '../../progress/screens/progress_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../../product/screens/product_catalog_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? userName;
   final String? email;
   final String? token;
-  final String? skinType; // ← EKLE
-  final List<String> skinConcerns; // ← EKLE
+  final String? skinType;
+  final List<String> skinConcerns;
   final int? userId;
 
   const HomeScreen({
@@ -17,8 +18,8 @@ class HomeScreen extends StatefulWidget {
     this.userName,
     this.email,
     this.token,
-    this.skinType, // ← EKLE
-    this.skinConcerns = const [], // ← EKLE
+    this.skinType,
+    this.skinConcerns = const [],
     this.userId,
   });
 
@@ -28,7 +29,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-
   late final List<Widget> _screens;
 
   @override
@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _screens = [
       _HomeTab(
         userName: widget.userName,
+        skinType: widget.skinType,
         skinConcerns: widget.skinConcerns,
         onProfileTap: () => setState(() => _currentIndex = 4),
         onRoutineTabRequested: () => setState(() => _currentIndex = 1),
@@ -61,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
@@ -127,17 +129,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HomeTab extends StatelessWidget {
   final String? userName;
+  final String? skinType;
   final List<String> skinConcerns;
   final VoidCallback? onProfileTap;
-  final VoidCallback
-      onRoutineTabRequested; // 🔥 Üst taba yönlendirme için ekledik
+  final VoidCallback onRoutineTabRequested;
 
   const _HomeTab({
     this.userName,
+    this.skinType,
     this.skinConcerns = const [],
     this.onProfileTap,
     required this.onRoutineTabRequested,
   });
+
+  String _getMorningPreview() {
+    if (skinType == null || skinType!.isEmpty) {
+      return 'Rutininizi oluşturmak için quiz yapın';
+    }
+    final type = skinType!.toLowerCase();
+    if (type.contains('yağlı') || type.contains('karma')) {
+      return 'Jel Temizleyici → Tonik → Nemlendirici → SPF';
+    } else if (type.contains('kuru')) {
+      return 'Kremsi Temizleyici → Tonik → Nemlendirici → SPF';
+    } else if (type.contains('hassas')) {
+      return 'Nazik Temizleyici → Sakinleştirici Tonik → SPF';
+    } else {
+      return 'Temizleyici → Tonik → Nemlendirici → SPF';
+    }
+  }
+
+  int _getStepCount() {
+    if (skinType == null) return 0;
+    int count = 4;
+    if (skinConcerns.contains('Koyu Lekeler') ||
+        skinConcerns.contains('Akne ve Sivilceler') ||
+        skinConcerns.contains('İnce Çizgiler / Kırışıklık')) {
+      count = 5;
+    }
+    return count;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -230,15 +260,17 @@ class _HomeTab extends StatelessWidget {
                               )),
                         ),
                         const Spacer(),
-                        const Text('3/5 adım',
-                            style:
-                                TextStyle(color: Colors.white70, fontSize: 12)),
+                        Text(
+                          skinType != null ? '${_getStepCount()} adım' : '',
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Temizleyici → Tonik → Nemlendirici',
-                      style: TextStyle(
+                    Text(
+                      _getMorningPreview(),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
@@ -247,10 +279,11 @@ class _HomeTab extends StatelessWidget {
                     const SizedBox(height: 16),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
-                      child: const LinearProgressIndicator(
-                        value: 0.6,
+                      child: LinearProgressIndicator(
+                        value: skinType != null ? 1.0 : 0.0,
                         backgroundColor: Colors.white24,
-                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                        valueColor:
+                            const AlwaysStoppedAnimation(Colors.white),
                         minHeight: 6,
                       ),
                     ),
@@ -261,12 +294,12 @@ class _HomeTab extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white54),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed:
-                            onRoutineTabRequested, // 🔥 Tıklandığında direkt rutin sayfasına atar
+                        onPressed: onRoutineTabRequested,
                         child: const Text('Rutine Devam Et'),
                       ),
                     ),
@@ -275,7 +308,7 @@ class _HomeTab extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // 🔥 [US-07] ÇAKIŞMA KONTROLÜ VE GÖRSEL UYARI PANELİ
+              // Çakışma uyarıları
               if (skinConcerns.contains("Koyu Lekeler") &&
                   skinConcerns.contains("Kızarıklık / Rozasea")) ...[
                 const SizedBox(height: 16),
@@ -284,8 +317,8 @@ class _HomeTab extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.amber.shade50,
                     borderRadius: BorderRadius.circular(16),
-                    border:
-                        Border.all(color: Colors.amber.shade200, width: 1.5),
+                    border: Border.all(
+                        color: Colors.amber.shade200, width: 1.5),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +362,8 @@ class _HomeTab extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.red.shade200, width: 1.5),
+                    border:
+                        Border.all(color: Colors.red.shade200, width: 1.5),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,6 +398,42 @@ class _HomeTab extends StatelessWidget {
                   ),
                 ),
               ],
+
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ProductCatalogScreen(),
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE05252),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_bag, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Ürün Kataloğuna Git',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),

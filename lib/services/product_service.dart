@@ -4,7 +4,7 @@ import 'package:dermasmart/features/product/screens/product_catalog_screen.dart'
 
 class ProductService {
   static Future<List<Product>> fetchProducts() async {
-    final String apiUrl = 'http://127.0.0.1:5030/api/products';
+    final String apiUrl = 'http://10.0.2.2:5030/api/products';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));

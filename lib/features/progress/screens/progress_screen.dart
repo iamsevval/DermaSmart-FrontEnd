@@ -16,6 +16,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   int _totalDays = 0;
   Set<DateTime> _completedDays = {};
   bool _isLoading = true;
+  bool _hasError = false;
   DateTime _focusedDay = DateTime.now();
 
   @override
@@ -24,62 +25,49 @@ class _ProgressScreenState extends State<ProgressScreen> {
     _loadHistory();
   }
 
-  @override
-  void didUpdateWidget(ProgressScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _loadHistory();
-  }
-
   Future<void> _loadHistory() async {
-    final result = await TrackingService.getHistory(
-      token: widget.token ?? '',
-      userId: widget.userId ?? 0,
-    );
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
-    final List<dynamic> days = result['completedDays'] ?? [];
-    final Set<DateTime> completedDays = days.map((d) {
-      final parts = d.toString().split('-');
-      return DateTime(
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-        int.parse(parts[2]),
+    try {
+      final result = await TrackingService.getHistory(
+        token: widget.token ?? '',
+        userId: widget.userId ?? 0,
       );
-    }).toSet();
 
-    // Bugün tüm adımlar tamamlandıysa bugünü de ekle
-    if (mounted) {
-      setState(() {
-        _completedDays = completedDays;
-        _streak = result['streak'] ?? 0;
-        _totalDays = completedDays.length;
-        _isLoading = false;
-      });
+      final List<dynamic> days = result['completedDays'] ?? [];
+      final Set<DateTime> completedDays = days.map((d) {
+        final parts = d.toString().split('-');
+        return DateTime(
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2]),
+        );
+      }).toSet();
+
+      if (mounted) {
+        setState(() {
+          _completedDays = completedDays;
+          _streak = result['streak'] ?? 0;
+          _totalDays = completedDays.length;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
     }
   }
 
   bool _isDayCompleted(DateTime day) {
-    return _completedDays.any(
-        (d) => d.year == day.year && d.month == day.month && d.day == day.day);
-  }
-
-  Widget _buildCompletedDay(DateTime day) {
-    return Container(
-      margin: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.green.shade400,
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Text(
-          '${day.day}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
+    return _completedDays.any((d) =>
+        d.year == day.year && d.month == day.month && d.day == day.day);
   }
 
   @override
@@ -90,51 +78,95 @@ class _ProgressScreenState extends State<ProgressScreen> {
         title: const Text('İlerleme'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadHistory,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Streak banner
-                  _buildStreakBanner(),
-                  const SizedBox(height: 20),
-
-                  // İstatistikler
-                  _buildStatsRow(),
-                  const SizedBox(height: 24),
-
-                  // Takvim başlığı
-                  const Text(
-                    'Rutin Takvimi',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Tamamladığın günler yeşil ile gösteriliyor',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Takvim
-                  _buildCalendar(),
-                  const SizedBox(height: 20),
-
-                  // Açıklama
-                  _buildLegend(),
+                  CircularProgressIndicator(color: Colors.deepPurple),
+                  SizedBox(height: 16),
+                  Text('Veriler yükleniyor...',
+                      style: TextStyle(color: Colors.grey)),
                 ],
               ),
-            ),
+            )
+          : _hasError
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.wifi_off_rounded,
+                          size: 64, color: Colors.grey.shade400),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Bağlantı hatası',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'İnternet bağlantınızı kontrol edin',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _loadHistory,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Tekrar Dene'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadHistory,
+                  color: Colors.deepPurple,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStreakBanner(),
+                        const SizedBox(height: 20),
+                        _buildStatsRow(),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Rutin Takvimi',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tamamladığın günler yeşil ile gösteriliyor',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildCalendar(),
+                        const SizedBox(height: 20),
+                        _buildLegend(),
+                      ],
+                    ),
+                  ),
+                ),
     );
   }
 
@@ -159,7 +191,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$_streak Günlük Seri!',
+                  _streak > 0 ? '$_streak Günlük Seri!' : 'Seri Başlat!',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -207,8 +239,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            value:
-                _totalDays > 0 ? '%${((_totalDays / 30) * 100).round()}' : '%0',
+            value: _totalDays > 0
+                ? '%${((_totalDays / 30) * 100).round()}'
+                : '%0',
             label: 'Bu Ay',
             emoji: '📈',
             color: const Color(0xFFE8E0F5),
@@ -248,10 +281,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
             color: Colors.deepPurple,
             fontWeight: FontWeight.w700,
           ),
-          selectedDecoration: const BoxDecoration(
-            color: Colors.deepPurple,
-            shape: BoxShape.circle,
-          ),
           outsideDaysVisible: false,
         ),
         calendarBuilders: CalendarBuilders(
@@ -265,7 +294,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
             if (_isDayCompleted(day)) {
               return _buildCompletedDay(day);
             }
-            // Bugün tamamlanmadıysa normal mor göster
             return Container(
               margin: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -291,12 +319,31 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
+  Widget _buildCompletedDay(DateTime day) {
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.green.shade400,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '${day.day}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildLegend() {
     return Row(
       children: [
         Container(
-          width: 20,
-          height: 20,
+          width: 20, height: 20,
           decoration: BoxDecoration(
             color: Colors.green.shade400,
             shape: BoxShape.circle,
@@ -314,8 +361,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
         const SizedBox(width: 20),
         Container(
-          width: 20,
-          height: 20,
+          width: 20, height: 20,
           decoration: BoxDecoration(
             color: Colors.deepPurple.withOpacity(0.3),
             shape: BoxShape.circle,
