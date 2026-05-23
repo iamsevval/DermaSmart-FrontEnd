@@ -111,6 +111,30 @@ class _RoutineScreenState extends State<RoutineScreen>
 
   Widget _buildRoutineTab(List<Map<String, String>> steps,
       {required bool isMorning}) {
+    if (steps.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.spa_outlined, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            const Text(
+              'Henüz rutin oluşturulmadı',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Quiz yaparak kişisel rutininizi oluşturun',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -121,7 +145,6 @@ class _RoutineScreenState extends State<RoutineScreen>
               ))),
           const SizedBox(height: 8),
         ],
-
         Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -147,7 +170,6 @@ class _RoutineScreenState extends State<RoutineScreen>
             ],
           ),
         ),
-
         ...steps.asMap().entries.map((entry) {
           final i = entry.key;
           final step = entry.value;
@@ -248,7 +270,6 @@ class _RoutineStepCard extends StatefulWidget {
 
 class _RoutineStepCardState extends State<_RoutineStepCard>
     with AutomaticKeepAliveClientMixin {
-  
   // 🔥 YENİ GÜNLÜK AKILLI STORAGE DEĞİŞKENLERİ
   bool _completed = false;
   String _todayStr = '';
@@ -291,7 +312,7 @@ class _RoutineStepCardState extends State<_RoutineStepCard>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    
+
     // 💡 GEREKSİZ 'initState' VEYA ESKİ RESET KODLARI BURADAN UÇURULDU, MANTIK TAMAMEN TEMİZLENDİ.
 
     return Container(

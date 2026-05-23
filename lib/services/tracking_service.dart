@@ -44,10 +44,11 @@ class TrackingService {
         final List<dynamic> data = jsonDecode(response.body);
 
         // Backend tarihe göre gruplu liste döndürüyor
-        // Biz sadece tamamlanan günlerin listesini çıkarıyoruz
-        final completedDays = data.map((d) => d['date'].toString()).toList();
+        // Her gruptaki tüm adımlar tamamlandıysa o gün tamamlanmış sayılır
+        final completedDays = data
+            .map((d) => d['date'].toString())
+            .toList();
 
-        // Streak hesapla
         final streak = _calculateStreak(completedDays);
 
         return {
@@ -57,14 +58,8 @@ class TrackingService {
       }
       return {'completedDays': [], 'streak': 0};
     } catch (e) {
-      // Backend bağlanamazsa mock data
-      final today = DateTime.now();
-      final mockDays = [
-        today.subtract(const Duration(days: 1)).toIso8601String().split('T')[0],
-        today.subtract(const Duration(days: 2)).toIso8601String().split('T')[0],
-        today.subtract(const Duration(days: 3)).toIso8601String().split('T')[0],
-      ];
-      return {'completedDays': mockDays, 'streak': 3};
+      // Backend bağlanamazsa boş döndür
+      return {'completedDays': [], 'streak': 0};
     }
   }
 
@@ -82,13 +77,13 @@ class TrackingService {
           );
         })
         .toList()
-      ..sort((a, b) => b.compareTo(a)); // en yeni önce
+      ..sort((a, b) => b.compareTo(a));
 
     int streak = 0;
     DateTime check = DateTime.now();
 
     for (final date in dates) {
-      final diff = check.difference(date).inDays;
+      final diff = check.difference(date).inDays.abs();
       if (diff <= 1) {
         streak++;
         check = date;
