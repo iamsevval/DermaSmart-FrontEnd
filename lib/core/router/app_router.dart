@@ -22,8 +22,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  //initialLocation: AppRoutes.login,
-  initialLocation: '/catalog',
+  initialLocation: AppRoutes.login,
   routes: [
     GoRoute(
       path: AppRoutes.splash,

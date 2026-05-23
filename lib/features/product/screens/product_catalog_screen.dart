@@ -129,6 +129,14 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1A2332)),
+          onPressed: () => context.pop(),
+        ),
+      ),
       backgroundColor: const Color(0xFFF8F5F2),
       body: SafeArea(
         child: Column(

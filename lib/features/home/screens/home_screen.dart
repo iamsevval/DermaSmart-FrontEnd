@@ -3,6 +3,7 @@ import '../../routine/screens/routine_screen.dart';
 import '../../scan/screens/scan_screen.dart';
 import '../../progress/screens/progress_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? userName;
@@ -363,7 +364,39 @@ class _HomeTab extends StatelessWidget {
                     ],
                   ),
                 ),
-              ],
+              ], 
+              // --- PO TESTİ İÇİN KATALOG BUTONU BURAYA EKLENDİ ---
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.push('/catalog'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE05252), // Kırmızı buton
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_bag, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Ürün Kataloğuna Git',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // --------------------------------------------------
             ],
           ),
         ),
