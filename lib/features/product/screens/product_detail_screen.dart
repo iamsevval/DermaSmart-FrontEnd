@@ -353,17 +353,6 @@ class ProductDetailScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFE0E8F0), width: 1.5),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.bookmark_border_rounded,
-                color: AppColors.textSecondary, size: 22),
-          ),
-          const SizedBox(width: 14),
           Expanded(
             child: SizedBox(
               height: 52,
