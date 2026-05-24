@@ -143,7 +143,9 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1A2332)),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       backgroundColor: const Color(0xFFF8F5F2),

@@ -12,6 +12,7 @@ import '../../features/progress/screens/progress_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/product/screens/product_detail_screen.dart';
 import '../../features/product/screens/product_catalog_screen.dart';
+import '../../features/favorites/screens/favorites_screen.dart'; // YENİ EKLENDİ
 import '../../shared/widgets/main_scaffold.dart';
 import '../constants/app_routes.dart';
 // MODEL IMPORTU EKLENDİ (Hata almamak için şart)
@@ -83,6 +84,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/catalog',
       builder: (context, state) => const ProductCatalogScreen(),
+    ),
+    GoRoute(
+      path: '/favorites',
+      builder: (context, state) => const FavoritesScreen(),
     ),
     GoRoute(
       path: AppRoutes.ingredientConflict,

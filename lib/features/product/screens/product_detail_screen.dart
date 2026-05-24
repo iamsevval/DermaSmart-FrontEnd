@@ -1,12 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../services/favorites_service.dart';
 import 'product_catalog_screen.dart'; // Product modelini buradan alıyoruz
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
   const ProductDetailScreen({super.key, required this.product});
+
+  @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  final FavoritesService _favoritesService = FavoritesService();
+  bool _isFavorite = false;
+  bool _isLoadingFavorite = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfFavorite();
+  }
+
+  Future<void> _checkIfFavorite() async {
+    try {
+      final favorites = await _favoritesService.getFavorites();
+      if (mounted) {
+        setState(() {
+          _isFavorite = favorites.any((p) => p.id == widget.product.id);
+          _isLoadingFavorite = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingFavorite = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    setState(() => _isLoadingFavorite = true);
+    bool success = false;
+    
+    if (_isFavorite) {
+      success = await _favoritesService.removeFavorite(widget.product.id);
+    } else {
+      success = await _favoritesService.addFavorite(widget.product.id);
+    }
+
+    if (success && mounted) {
+      setState(() {
+        _isFavorite = !_isFavorite;
+        _isLoadingFavorite = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isFavorite ? 'Favorilere eklendi.' : 'Favorilerden çıkarıldı.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else if (mounted) {
+      setState(() => _isLoadingFavorite = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('İşlem başarısız oldu.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +96,9 @@ class ProductDetailScreen extends StatelessWidget {
       leading: Padding(
         padding: const EdgeInsets.all(8),
         child: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
+          onTap: () {
+            Navigator.pop(context);
+          },
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.92),
@@ -70,12 +135,18 @@ class ProductDetailScreen extends StatelessWidget {
               ],
             ),
             child: IconButton(
-              icon: const Icon(
-                Icons.favorite_border_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-              onPressed: () {},
+              icon: _isLoadingFavorite 
+                ? const SizedBox(
+                    width: 20, 
+                    height: 20, 
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)
+                  )
+                : Icon(
+                    _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+              onPressed: _isLoadingFavorite ? null : _toggleFavorite,
             ),
           ),
         ),
@@ -85,7 +156,7 @@ class ProductDetailScreen extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.network(
-              product.imageUrl,
+              widget.product.imageUrl,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: AppColors.surfaceVariant,
@@ -147,7 +218,7 @@ class ProductDetailScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          product.brand.toUpperCase(),
+          widget.product.brand.toUpperCase(),
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -157,7 +228,7 @@ class ProductDetailScreen extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          product.name,
+          widget.product.name,
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                 letterSpacing: -0.5,
                 height: 1.15,
@@ -165,7 +236,7 @@ class ProductDetailScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          '₺${product.price.toStringAsFixed(2)}',
+          '₺${widget.product.price.toStringAsFixed(2)}',
           style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w900,
@@ -189,7 +260,7 @@ class ProductDetailScreen extends StatelessWidget {
           const Icon(Icons.check_circle, color: AppColors.success),
           const SizedBox(width: 10),
           Text(
-            '${product.skinType} için uygun',
+            '${widget.product.skinType} için uygun',
             style: const TextStyle(
               fontWeight: FontWeight.w600,
               color: Color(0xFF2E7D32),
@@ -225,7 +296,7 @@ class ProductDetailScreen extends StatelessWidget {
             ],
           ),
           child: Text(
-            product.purpose,
+            widget.product.purpose,
             style: const TextStyle(
               fontSize: 14.5,
               color: AppColors.textSecondary,
@@ -247,7 +318,7 @@ class ProductDetailScreen extends StatelessWidget {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: product.ingredients
+          children: widget.product.ingredients
               .asMap()
               .entries
               .map((e) => _buildIngredientChip(e.value, e.key))
