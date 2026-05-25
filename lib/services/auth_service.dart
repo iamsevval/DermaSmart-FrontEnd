@@ -27,6 +27,9 @@ class AuthService {
       print('Register Response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
+        if (data['token'] != null) {
+          await saveToken(data['token']);
+        }
         return {
           'success': true,
           'userId': data['userId'],
@@ -63,6 +66,9 @@ class AuthService {
       print('Login Response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
+        if (data['token'] != null) {
+          await saveToken(data['token']);
+        }
         return {
           'success': true,
           'token': data['token'],
@@ -134,5 +140,18 @@ class AuthService {
   static Future<String?> getSavedName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('user_name');
+  }
+
+  // 6. TOKEN KAYDET
+  static Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+  }
+
+  // 7. ÇIKIŞ YAP (Tüm verileri temizle)
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_name');
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../auth/screens/splash_screen.dart';
 import '../../favorites/screens/favorites_screen.dart';
+import '../../../services/auth_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   final String? userName;
@@ -134,7 +135,9 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
-            onPressed: () {
+            onPressed: () async {
+              await AuthService.logout();
+              if (!context.mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (_) => const SplashScreen()),
