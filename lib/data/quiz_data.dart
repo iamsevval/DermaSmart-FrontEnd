@@ -7,7 +7,7 @@ class QuizData {
     type: QuestionType.branching,
     options: [
       QuizOption(text: "Evet, Biliyorum", subtitle: "Doğrudan cilt tipimi seçeceğim"),
-      QuizOption(text: "Emin Değilim", subtitle: "Bana 5 soruluk test testini uygulayın"),
+      QuizOption(text: "Emin Değilim", subtitle: "Genel ankete başla"),
       QuizOption(text: "Kamera ile Analiz", subtitle: "Yapay zeka analiz etsin (Yakında eklenecek)"),
     ],
   );

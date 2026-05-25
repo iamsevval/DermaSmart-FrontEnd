@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../auth/screens/splash_screen.dart';
+import '../../favorites/screens/favorites_screen.dart';
+import '../../../services/auth_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   final String? userName;
@@ -119,8 +121,23 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          OutlinedButton.icon(
+          ElevatedButton.icon(
             onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()));
+            },
+            icon: const Icon(Icons.favorite_rounded, color: Colors.white),
+            label: const Text('Favorilerim', style: TextStyle(color: Colors.white, fontSize: 16)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6B5EA8),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () async {
+              await AuthService.logout();
+              if (!context.mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (_) => const SplashScreen()),
@@ -131,7 +148,9 @@ class ProfileScreen extends StatelessWidget {
             label: const Text('Çıkış Yap',
               style: TextStyle(color: Colors.red)),
             style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
               side: const BorderSide(color: Colors.red),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],

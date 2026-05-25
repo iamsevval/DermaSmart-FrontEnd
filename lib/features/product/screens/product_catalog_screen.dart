@@ -43,17 +43,19 @@ class Product {
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? 'İsimsiz Ürün',
       brand: 'DermaSmart',
-      imageUrl: 'https://placehold.co/300x300/e8f4f8/2c7da0?text=Ürün',
+      imageUrl: json['imageUrl'] ?? 'https://placehold.co/300x300/e8f4f8/2c7da0?text=Ürün',
       skinType: translatedSkinTypes.isEmpty ? 'Tümü' : translatedSkinTypes,
-      price: 199.90,
-      ingredients: json['ingredients'] != null
-          ? json['ingredients']
+      price: json['price'] != null ? (json['price'] as num).toDouble() : 199.90,
+      ingredients: json['activeIngredients'] != null
+          ? json['activeIngredients']
               .toString()
               .split(',')
               .map((e) => e.trim())
               .toList()
-          : [],
-      purpose: json['category'] ?? 'Detaylı açıklama bulunmuyor.',
+          : (json['ingredients'] != null
+              ? json['ingredients'].toString().split(',').map((e) => e.trim()).toList()
+              : []),
+      purpose: json['usagePurpose'] ?? 'Detaylı açıklama bulunmuyor.',
     );
   }
 }
@@ -141,7 +143,9 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1A2332)),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       backgroundColor: const Color(0xFFF8F5F2),

@@ -54,11 +54,18 @@ class _ResultScreenState extends State<ResultScreen> {
 
     setState(() => _isSaving = true);
 
+    // Cilt tipini hesapla ve profile ata (Böylece null kalmaz)
+    final computedSkinType = profile.calculateSkinType();
+    profile.skinType = computedSkinType;
+
+    String formattedAge = profile.ageRange ?? "18-24";
+    // formattedAge.replaceAll(' ', '') yapmıyoruz çünkü "45 ve üzeri" boşluk içeriyor.
+
     final result = await AuthService.saveSkinProfile(
       token: profile.token!,
-      skinType: profile.skinType ?? 'Bilinmiyor',
+      skinType: computedSkinType,
       concerns: profile.skinConcerns,
-      ageRange: profile.ageRange ?? 'Bilinmiyor',
+      ageRange: formattedAge,
     );
 
     if (mounted) {
@@ -76,7 +83,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String skinTypeTitle = widget.userProfile.skinType ?? "Karma (Hesaplanan)";
+    String skinTypeTitle = widget.userProfile.skinType ?? widget.userProfile.calculateSkinType();
 
     return Scaffold(
       backgroundColor: Colors.deepPurple.shade50,

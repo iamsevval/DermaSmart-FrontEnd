@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/routine_logic.dart';
 import '../../../services/tracking_service.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 🟢 Fazladan olan ikinci import satırı temizlendi!
+import 'package:shared_preferences/shared_preferences.dart'; 
+import '../../../services/custom_routine_service.dart';
 
 class RoutineScreen extends StatefulWidget {
   final String? skinType;
@@ -37,6 +38,54 @@ class _RoutineScreenState extends State<RoutineScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _buildRoutine();
+    _loadCustomRoutines();
+  }
+
+  Future<void> _loadCustomRoutines() async {
+    try {
+      final customProducts = await CustomRoutineService.getRoutineProducts();
+      if (mounted && customProducts.isNotEmpty) {
+        setState(() {
+          for (var p in customProducts) {
+            final step = {
+              'stepName': p.name,
+              'description': 'Katalogdan eklendi: ${p.brand}',
+              'warning': '',
+            };
+            
+            bool isMorning = true;
+            bool isEvening = true;
+            final ing = p.ingredients.join(', ').toLowerCase();
+            final purpose = p.purpose.toLowerCase();
+            final name = p.name.toLowerCase();
+            
+            // Sadece Sabah: Güneş Kremi, SPF ve C Vitamini
+            if (name.contains('güneş') || name.contains('sunscreen') || name.contains('spf') || 
+                ing.contains('spf') || purpose.contains('uv')) {
+              isEvening = false;
+            }
+            if (name.contains('vitamin c') || ing.contains('vitamin c') || ing.contains('c vitamini')) {
+              isEvening = false;
+            }
+
+            // Sadece Akşam: Retinol, AHA/BHA, Gece kremleri
+            if (ing.contains('retinol') || name.contains('retinol') || 
+                name.contains('gece') || name.contains('night') || purpose.contains('gece') ||
+                ing.contains('aha') || ing.contains('bha') || name.contains('aha') || name.contains('bha') ||
+                ing.contains('glikolik') || ing.contains('salisilik') || name.contains('exfoliant')) {
+              isMorning = false;
+              // Eğer hem sabah hem akşam false olduysa (çakışan anahtar kelimeler), akşamı tercih et.
+              isEvening = true; 
+            }
+
+            if (isMorning) _morningSteps.add(step);
+            if (isEvening) _eveningSteps.add(step);
+          }
+        });
+      }
+    } catch (e) {
+      // Sessizce geç
+    }
   }
 
   void _buildRoutine() {
@@ -287,7 +336,7 @@ class _RoutineStepCardState extends State<_RoutineStepCard>
   }
 
   String get _prefKey =>
-      'step_${widget.isMorning ? 'morning' : 'evening'}_${widget.stepNumber}_$_todayStr';
+      'step_${widget.isMorning ? 'morning' : 'evening'}_${widget.stepNumber}_${widget.userId ?? 0}_$_todayStr';
 
   Future<void> _loadState() async {
     final prefs = await SharedPreferences.getInstance();
