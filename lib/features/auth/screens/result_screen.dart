@@ -290,7 +290,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 onPressed: _isSaving
                     ? null
                     : () {
-                        Navigator.of(context).pushAndRemoveUntil(
+                        Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
                             builder: (_) => HomeScreen(
                               userName: widget.userProfile.name,
@@ -301,7 +301,6 @@ class _ResultScreenState extends State<ResultScreen> {
                               userId: widget.userProfile.userId,
                             ),
                           ),
-                          (route) => false,
                         );
                       },
                 style: ElevatedButton.styleFrom(

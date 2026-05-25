@@ -138,10 +138,9 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () async {
               await AuthService.logout();
               if (!context.mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
+              Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                   builder: (_) => const SplashScreen()),
-                (route) => false,
               );
             },
             icon: const Icon(Icons.logout, color: Colors.red),
