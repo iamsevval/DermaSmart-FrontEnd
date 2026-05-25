@@ -126,4 +126,44 @@ class UserProfileModel {
       'budget': budget,
     };
   }
+
+  String calculateSkinType() {
+    if (skinType != null && skinType!.isNotEmpty && skinType != 'Bilinmiyor') {
+      return skinType!;
+    }
+    
+    int oilyScore = 0;
+    int dryScore = 0;
+    int sensitiveScore = 0;
+
+    // sq1
+    if (washFeeling == "Gergin ve pul pul") dryScore += 2;
+    if (washFeeling == "Sadece T bölgem parlıyor") { oilyScore++; }
+    if (washFeeling == "Komple yağlı") oilyScore += 2;
+
+    // sq2
+    if (poreSize == "Neredeyse görünmez") dryScore++;
+    if (poreSize == "Sadece burun ve çenemde belirgin") { oilyScore++; }
+    if (poreSize == "Tüm yüzümde büyük ve belirgin") oilyScore += 2;
+
+    // sq3
+    if (shineLevel == "Hayır, genelde mat kalır") dryScore += 2;
+    if (shineLevel == "Sadece öğleden sonra hafifçe parlar") { oilyScore++; }
+    if (shineLevel == "Evet, çok çabuk ve her yerde parlar") oilyScore += 2;
+
+    // sq4
+    if (flakiness == "Evet, sık sık yaşarım") dryScore += 2;
+    if (flakiness == "Sadece soğuk havalarda") dryScore++;
+    if (flakiness == "Hayır, cildim genelde pürüzsüzdür") oilyScore++;
+
+    // sq5
+    if (sensitivityResponse == "Evet, hemen tepki verir ve kızarır") sensitiveScore += 3;
+    if (sensitivityResponse == "Bazen içindeki asitlere göre değişir") sensitiveScore += 1;
+
+    if (sensitiveScore >= 3) return "Hassas";
+    if (oilyScore > dryScore + 2) return "Yağlı";
+    if (dryScore > oilyScore + 2) return "Kuru";
+    if (oilyScore > 0 && dryScore > 0) return "Karma";
+    return "Normal";
+  }
 }

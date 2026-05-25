@@ -55,15 +55,6 @@ class _QuizFlowScreenState extends State<QuizFlowScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      String formattedAge = _userProfile.ageRange ?? "18-24";
-      formattedAge = formattedAge.replaceAll(' ', ''); 
-
-      await AuthService.saveSkinProfile(
-        token: _userProfile.token!,
-        skinType: _userProfile.skinType ?? "Normal",
-        concerns: _userProfile.skinConcerns ?? [],
-        ageRange: formattedAge,
-      );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
