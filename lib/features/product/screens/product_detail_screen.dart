@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/favorites_service.dart';
+import '../../../services/custom_routine_service.dart';
 import 'product_catalog_screen.dart'; // Product modelini buradan alıyoruz
 
 class ProductDetailScreen extends StatefulWidget {
@@ -18,10 +19,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isFavorite = false;
   bool _isLoadingFavorite = true;
 
+  bool _isInRoutine = false;
+  bool _isLoadingRoutine = true;
+
   @override
   void initState() {
     super.initState();
     _checkIfFavorite();
+    _checkIfInRoutine();
+  }
+
+  Future<void> _checkIfInRoutine() async {
+    final inRoutine = await CustomRoutineService.isProductInRoutine(widget.product.id);
+    if (mounted) {
+      setState(() {
+        _isInRoutine = inRoutine;
+        _isLoadingRoutine = false;
+      });
+    }
   }
 
   Future<void> _checkIfFavorite() async {
@@ -67,6 +82,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       setState(() => _isLoadingFavorite = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('İşlem başarısız oldu.')),
+      );
+    }
+  }
+
+  Future<void> _toggleRoutine() async {
+    setState(() => _isLoadingRoutine = true);
+    
+    if (_isInRoutine) {
+      await CustomRoutineService.removeProduct(widget.product.id);
+    } else {
+      await CustomRoutineService.addProduct(widget.product);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isInRoutine = !_isInRoutine;
+        _isLoadingRoutine = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isInRoutine ? 'Rutine eklendi.' : 'Rutinden çıkarıldı.'),
+          duration: const Duration(seconds: 2),
+        ),
       );
     }
   }
@@ -428,9 +466,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: SizedBox(
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add),
-                label: const Text('Rutine Ekle'),
+                onPressed: _isLoadingRoutine ? null : _toggleRoutine,
+                icon: _isLoadingRoutine 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Icon(_isInRoutine ? Icons.remove_circle_outline : Icons.add, color: Colors.white),
+                label: Text(
+                  _isInRoutine ? 'Rutinden Çıkar' : 'Rutine Ekle',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isInRoutine ? Colors.red.shade400 : AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ),

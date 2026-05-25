@@ -30,6 +30,9 @@ class AuthService {
         if (data['token'] != null) {
           await saveToken(data['token']);
         }
+        if (data['userId'] != null) {
+          await saveUserId(data['userId']);
+        }
         return {
           'success': true,
           'userId': data['userId'],
@@ -68,6 +71,9 @@ class AuthService {
       if (response.statusCode == 200) {
         if (data['token'] != null) {
           await saveToken(data['token']);
+        }
+        if (data['userId'] != null) {
+          await saveUserId(data['userId']);
         }
         return {
           'success': true,
@@ -148,10 +154,17 @@ class AuthService {
     await prefs.setString('auth_token', token);
   }
 
+  // YENİ: USER ID KAYDET
+  static Future<void> saveUserId(int userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('user_id', userId);
+  }
+
   // 7. ÇIKIŞ YAP (Tüm verileri temizle)
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('user_name');
+    await prefs.remove('user_id');
   }
 }

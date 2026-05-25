@@ -65,10 +65,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: _currentIndex == 1 
+          ? RoutineScreen(
+              skinType: widget.skinType,
+              skinConcerns: widget.skinConcerns,
+              token: widget.token,
+              userId: widget.userId,
+            )
+          : IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
