@@ -59,7 +59,7 @@ class _ResultScreenState extends State<ResultScreen> {
     profile.skinType = computedSkinType;
 
     String formattedAge = profile.ageRange ?? "18-24";
-    formattedAge = formattedAge.replaceAll(' ', '');
+    // formattedAge.replaceAll(' ', '') yapmıyoruz çünkü "45 ve üzeri" boşluk içeriyor.
 
     final result = await AuthService.saveSkinProfile(
       token: profile.token!,

@@ -336,7 +336,7 @@ class _RoutineStepCardState extends State<_RoutineStepCard>
   }
 
   String get _prefKey =>
-      'step_${widget.isMorning ? 'morning' : 'evening'}_${widget.stepNumber}_$_todayStr';
+      'step_${widget.isMorning ? 'morning' : 'evening'}_${widget.stepNumber}_${widget.userId ?? 0}_$_todayStr';
 
   Future<void> _loadState() async {
     final prefs = await SharedPreferences.getInstance();
