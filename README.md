@@ -1,17 +1,81 @@
-# dermasmart
+# DermaSmart Mobile App 📱
 
-A new Flutter project.
+DermaSmart, kullanıcıların cilt bakım rutinlerini doğru adımlarla takip etmelerini ve yönetmelerini sağlayan, Flutter ile geliştirilmiş çapraz platform (cross-platform) bir mobil uygulamadır.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 📸 Ekran Görüntüleri
+<div style="display: flex; flex-direction: row; gap: 10px; margin-bottom: 10px;">
+  <img src="https://github.com/user-attachments/assets/3ee433a0-a2fa-42bb-aba0-df985a4be064" alt="Ekran 1" width="200" />
+  <img src="https://github.com/user-attachments/assets/d8790708-10a3-4364-a810-da4c58f14f64" alt="Ekran 2" width="200" />
+  <img src="https://github.com/user-attachments/assets/12c0f339-7db3-413a-96a3-af091effe387" alt="Ekran 3" width="200" />
+</div>
 
-A few resources to get you started if this is your first Flutter project:
+<div style="display: flex; flex-direction: row; gap: 10px;">
+  <img src="https://github.com/user-attachments/assets/8e2a2ec0-5dbb-4fc0-9474-f4bcc8282475" alt="Ekran 4" width="200" />
+  <img src="https://github.com/user-attachments/assets/3854986b-ab64-47ea-b577-d308823caa68" alt="Ekran 5" width="200" />
+  <img src="https://github.com/user-attachments/assets/d4560187-ea70-4441-a511-e4c88be9f0fe" alt="Ekran 6" width="200" />
+</div>
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 Teknolojiler
+
+- **Framework:** Flutter & Dart
+- **Durum Yönetimi (State Management):** Riverpod
+- **Ağ İstekleri:** HTTP
+- **Backend Bağlantısı:** .NET REST API
+
+---
+
+## 🛠️ Kurulum ve Çalıştırma Adımları
+
+Projeyi kendi bilgisayarınızda derlemek ve bir emülatörde/fiziksel cihazda çalıştırmak için aşağıdaki adımları sırasıyla uygulayın.
+
+### 1️⃣ Bağımlılıkları İndir
+
+Projede kullanılan tüm paketleri yüklemek için:
+
+```bash
+flutter pub get
+```
+
+---
+
+### 2️⃣ Splash Screen (Açılış Ekranı) Oluştur
+
+Uygulamanın başlangıç ekranını oluşturmak için:
+
+```bash
+dart run flutter_native_splash:create
+```
+
+---
+
+### 3️⃣ Uygulama İkonunu Oluştur
+
+Launcher iconlarını oluşturmak için:
+
+```bash
+dart run flutter_launcher_icons
+```
+
+---
+
+### 4️⃣ Uygulamayı Çalıştır
+
+Projeyi emülatörde veya fiziksel cihazda çalıştırmak için:
+
+```bash
+flutter run
+```
+
+---
+
+## 📦 Release APK Alma
+
+Canlı (release) modda APK oluşturmak için:
+
+```bash
+flutter build apk --release
+```
