@@ -1,6 +1,13 @@
 # DermaSmart Mobile App 📱
 
-DermaSmart, kullanıcıların cilt bakım rutinlerini doğru adımlarla takip etmelerini ve yönetmelerini sağlayan, Flutter ile geliştirilmiş çapraz platform (cross-platform) bir mobil uygulamadır.
+DermaSmart, yapay zeka destekli cilt analizi ile kullanıcılara kişiselleştirilmiş cilt bakım rutinleri sunan ve ihtiyaçlarına uygun ürünleri öneren, Flutter ile geliştirilmiş çapraz platform (cross-platform) bir mobil uygulamadır.
+
+**Vizyonumuz:** *"Herkesin cebinde bir cilt uzmanı."*
+
+## ✨ Temel Özellikler
+* **Kişiselleştirilmiş Rutinler:** Kullanıcının spesifik endişelerine ve cilt tipine göre sabah ve akşam için ayrı, adım adım rutin oluşturan akıllı sistem.
+* **İçerik Çakışma Kural Motoru (Rule-Based Engine):** Niasinamid, glikolik asit, C vitamini gibi içerik çakışmalarını önleyen kural tabanlı altyapı ile güvenli ürün kullanımı.
+* **Cilt Tipi ve Problem Analizi:** Akne, kuruluk veya leke gibi problemleri tanımlayarak hedef odaklı aktif bileşen önerileri.
 
 ---
 
@@ -79,3 +86,13 @@ Canlı (release) modda APK oluşturmak için:
 ```bash
 flutter build apk --release
 ```
+---
+
+## 👥 Geliştirici Ekip (Scrum Takımı)
+Bu proje, çevik yazılım (Agile) prensipleriyle 6 kişilik çapraz fonksiyonlu bir Scrum ekibi tarafından geliştirilmiştir:
+* **Hayrunnida Şahin** (Product Owner)
+* **Şevval Arslan** (Scrum Master)
+* **Zeynep Ekinci** (Backend Geliştirici)
+* **Senanur Turunç** (Backend Geliştirici)
+* **Senanur Kurşun** (FrontEnd Geliştirici)
+* **Ayşenur Küçükaslan** (Test / QA)
