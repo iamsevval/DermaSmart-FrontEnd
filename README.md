@@ -26,12 +26,17 @@ DermaSmart, yapay zeka destekli cilt analizi ile kullanıcılara kişiselleştir
 
 ---
 
-## 🚀 Teknolojiler
+- ## 🚀 Frontend (Mobil) Teknolojileri
 
-- **Framework:** Flutter & Dart
+- **Ana Çerçeve (Framework):** Flutter
+- **Programlama Dili:** Dart
 - **Durum Yönetimi (State Management):** Riverpod
-- **Ağ İstekleri:** HTTP
-- **Backend Bağlantısı:** .NET REST API
+- **Yönlendirme (Routing):** GoRouter
+- **Ağ İstekleri (Networking):** HTTP Paketi
+- **Yerel Veri Saklama:** Shared Preferences
+- **UI ve Tasarım Paketleri:** Material Design, Google Fonts, Table Calendar
+- **Native Entegrasyonlar:** Flutter Native Splash, Flutter Launcher Icons
+- **Backend Bağlantısı:** ASP.NET Core Web API (.NET 8) üzerinden REST API
 
 ---
 
